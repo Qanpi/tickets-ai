@@ -85,7 +85,7 @@ def infer(infer_path: str,
     # load provided state dictionary
     # note: by default train.py saves the model in data parallel mode
     network = torch.nn.DataParallel(network)
-    network.load_state_dict(torch.load(checkpoint.name))
+    network.load_state_dict(torch.load(checkpoint.name, map_location=device))
     network.eval()
 
     img = Image.open(infer_path.name)
