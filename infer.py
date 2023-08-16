@@ -106,13 +106,13 @@ def infer(infer_path: str,
         _validate(validate_path)
 
     if visualize:
-        _visualize(img, density_map.squeeze().cpu().detach().numpy())
+        return _visualize(img, density_map.squeeze().cpu().detach().numpy())
 
 def _validate(path): 
     img = Image.open(path.name)
     tensor = TF.pil_to_tensor(img)
 
-    true_count = torch.sum(tensor).item() / 255
+    true_count = torch.sum(tensor).item()
     print(f"The true number of objects: {true_count}")
 
 def _visualize(img, dmap):
@@ -135,7 +135,7 @@ def _visualize(img, dmap):
     dmap.putalpha(dmap.convert('L'))
 
     # display an image with density map put on top of it
-    Image.alpha_composite(img.convert('RGBA'), dmap.resize(img.size)).show()
+    return Image.alpha_composite(img.convert('RGBA'), dmap.resize(img.size))
 
 
 if __name__ == "__main__":
