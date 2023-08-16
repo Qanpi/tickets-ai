@@ -33,9 +33,6 @@ from model import UNet, FCRN_A
               type=click.File('r'),
               required=True,
               help="A path to an input image to infer.")
-@click.option('-v', '--validate_path',
-              type=click.File('r'),
-              help="A path to an image for validation.")
 @click.option('-n', '--network_architecture',
               type=click.Choice(['UNet', 'FCRN_A']),
               required=True,
@@ -59,7 +56,6 @@ from model import UNet, FCRN_A
               help="Visualize predicted density map.")
 
 def infer(infer_path: str,
-        validate_path: str,
           network_architecture: str,
           checkpoint: str,
           unet_filters: int,
@@ -102,18 +98,8 @@ def infer(infer_path: str,
 
     print(f"The number of objects found: {n_objects}")
 
-    if validate_path is not None:
-        _validate(validate_path)
-
     if visualize:
         return _visualize(img, density_map.squeeze().cpu().detach().numpy())
-
-def _validate(path): 
-    img = Image.open(path.name)
-    tensor = TF.pil_to_tensor(img)
-
-    true_count = torch.sum(tensor).item()
-    print(f"The true number of objects: {true_count}")
 
 def _visualize(img, dmap):
     """Draw a density map onto the image."""
