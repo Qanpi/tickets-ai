@@ -112,9 +112,10 @@ def _visualize(img, dmap):
     #display raw density map
     axes[0].imshow(dmap, cmap="hot")
 
+    #make min be zero
+    dmap -= np.min(dmap) 
     # add a alpha channel proportional to a density map value
-    canvas = axes[0].figure.canvas
-    overlaid = Image.frombytes("RGB", canvas.get_width_height(), canvas.tostring_rgb())
+    overlaid = Image.fromarray(dmap, mode="L")
 
     # detected.putalpha(mask)
 
