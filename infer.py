@@ -104,8 +104,8 @@ def infer(infer_path: str,
 def _visualize(img, dmap):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
-    fig, ax = plt.subplots(1, 2)
-    plt.axis("off")
+    fig, axes = plt.subplots(1, 2)
+    [ax.axis("off") for ax in axes]
 
     # create a PIL image from a matplotlib figure
     visual = Image.new("RGB", img.size)
@@ -118,8 +118,8 @@ def _visualize(img, dmap):
     visual = Image.alpha_composite(img.convert('RGBA'), visual)
 
     # plot a density map without axis, and density map over og image
-    ax[0].imshow(dmap, cmap="hot")
-    ax[1].imshow(img)
+    axes[0].imshow(dmap, cmap="hot")
+    axes[1].imshow(img)
     plt.show()
 
 if __name__ == "__main__":
