@@ -120,6 +120,7 @@ def _visualize(img, dmap):
     # plot a density map without axis, and density map over og image
     ax[0].imshow(dmap, cmap="hot")
     ax[1].imshow(img)
+    plt.show()
 
 if __name__ == "__main__":
     infer()
