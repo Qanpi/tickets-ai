@@ -118,7 +118,7 @@ def _visualize(img, dmap):
 
     # plot a density map without axis, and density map over og image
     axes[0].imshow(dmap, cmap="hot")
-    axes[1].imshow(img)
+    axes[1].imshow(visual)
     plt.show()
 
 if __name__ == "__main__":
