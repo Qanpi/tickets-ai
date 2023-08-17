@@ -105,20 +105,25 @@ def _visualize(img, dmap):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
     fig, axes = plt.subplots(1, 2)
+
+    #turn off axis ticks
     [ax.axis("off") for ax in axes]
 
-    # create a PIL image from a matplotlib figure
-    visual = Image.new("RGB", img.size)
+    #display raw density map
+    axes[0].imshow(dmap, cmap="hot")
 
     # add a alpha channel proportional to a density map value
-    visual.putalpha(Image.fromarray(dmap).convert('L'))
+    canvas = axes[0].figure.canvas
+    overlaid = Image.frombytes("RGB", canvas.get_width_height(), canvas.tostring_rgb())
+
+    # detected.putalpha(mask)
 
     # display an image with density map put on top of it
-    visual = Image.alpha_composite(img.convert('RGBA'), visual)
+    # visualized = Image.alpha_composite(img.convert('RGBA'), detected)
 
     # plot a density map without axis, and density map over og image
-    axes[0].imshow(dmap, cmap="hot")
-    axes[1].imshow(visual)
+    axes[1].imshow(overlaid)
+
     plt.show()
 
 if __name__ == "__main__":
