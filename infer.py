@@ -109,6 +109,7 @@ def _visualize(img, dmap):
 
     # create a PIL image from a matplotlib figure
     visual = Image.new("RGB", img.size)
+    dmap = Image.fromarray(dmap)
 
     # add a alpha channel proportional to a density map value
     visual.putalpha(dmap.convert('L'))
