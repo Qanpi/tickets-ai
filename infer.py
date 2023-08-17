@@ -99,30 +99,26 @@ def infer(infer_path: str,
     print(f"The number of objects found: {n_objects}")
 
     if visualize:
-        return _visualize(img, density_map.squeeze().cpu().detach().numpy())
+        _visualize(img, density_map.squeeze().cpu().detach().numpy())
 
 def _visualize(img, dmap):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
-    fig, ax = plt.subplots(figsize=figaspect(1.0 * img.size[1] / img.size[0]))
-    fig.subplots_adjust(0, 0, 1, 1)
-
-    # plot a density map without axis
-    ax.imshow(dmap, cmap="hot")
-    plt.axis('off')
-    fig.canvas.draw()
+    fig, ax = plt.subplots(1, 2)
+    plt.axis("off")
 
     # create a PIL image from a matplotlib figure
-    dmap = Image.frombytes('RGB',
-                           fig.canvas.get_width_height(),
-                           fig.canvas.tostring_rgb())
+    visual = Image.new("RGB", img.size)
 
     # add a alpha channel proportional to a density map value
-    dmap.putalpha(dmap.convert('L'))
+    visual.putalpha(dmap.convert('L'))
 
     # display an image with density map put on top of it
-    return Image.alpha_composite(img.convert('RGBA'), dmap.resize(img.size))
+    visual = Image.alpha_composite(img.convert('RGBA'), visual)
 
+    # plot a density map without axis, and density map over og image
+    ax[0].imshow(dmap, cmap="hot")
+    ax[1].imshow(img)
 
 if __name__ == "__main__":
     infer()
