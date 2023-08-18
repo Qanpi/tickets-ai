@@ -24,6 +24,7 @@ import torchvision.transforms.functional as TF
 import matplotlib.pyplot as plt
 from matplotlib.figure import figaspect
 from PIL import Image
+from skimage.feature import peak_local_max
 
 from model import UNet, FCRN_A
 
@@ -109,21 +110,30 @@ def _visualize(img, dmap):
     #turn off axis ticks
     [ax.axis("off") for ax in axes]
 
-    #display raw density map
-    axes[0].imshow(dmap, cmap="hot")
+    #normalize dmap between 0 and 255 
+    kernel = np.full((4, 4), 1)
+    peaks = peak_local_max(dmap, footprint=kernel, min_distance=2, num_peaks=28, exclude_border=False)
 
-    #make min be zero
-    dmap -= np.min(dmap) 
+    marks_x = [xy[1] for xy in peaks]
+    marks_y = [xy[0] for xy in peaks]
+
+    # mask = (dmap - np.min(dmap))*(300 / np.max(dmap))
+    # mask = mask.astype(np.uint8)
+
     # add a alpha channel proportional to a density map value
-    overlaid = Image.fromarray(dmap, mode="L")
-
-    # detected.putalpha(mask)
+    # red = Image.new("RGB", img.size, (0, 255, 0))
+    # red.putalpha(Image.fromarray(mask, mode="L"))
 
     # display an image with density map put on top of it
-    # visualized = Image.alpha_composite(img.convert('RGBA'), detected)
+    # overlaid = Image.alpha_composite(img.convert('RGBA'), red)
+
+    #display raw density map
+    axes[0].imshow(dmap, cmap="hot")
+    # axes[0].scatter(x=marks_x, y =marks_y, c=(0, 1, 0), s=10) 
 
     # plot a density map without axis, and density map over og image
-    axes[1].imshow(overlaid)
+    axes[1].imshow(img)
+    axes[1].scatter(x=marks_x, y =marks_y, c=(0, 1, 0), s=10) #green circle, radius of 10
 
     plt.show()
 
