@@ -3,5 +3,4 @@ __pycache__/
 *.pth
 *.h5
 .tmp.*
-data/
 .venv/
