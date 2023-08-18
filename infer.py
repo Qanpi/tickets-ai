@@ -26,7 +26,7 @@ from matplotlib.figure import figaspect
 from PIL import Image
 from skimage.feature import peak_local_max
 
-from model import UNet, FCRN_A
+from models import UNet, FCRN_A
 
 
 @click.command()

@@ -9,7 +9,7 @@ from matplotlib import pyplot
 
 from data_loader import H5Dataset
 from looper import Looper
-from model import UNet, FCRN_A
+from models import UNet, FCRN_A
 
 
 @click.command()
