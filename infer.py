@@ -133,7 +133,9 @@ def _visualize(img, dmap):
 
     # plot a density map without axis, and density map over og image
     axes[1].imshow(img)
-    axes[1].scatter(x=marks_x, y =marks_y, c=(0, 1, 0), s=10) #green circle, radius of 10
+
+    green = np.array([0, 1, 0])
+    axes[1].scatter(x=marks_x, y =marks_y, c=green, s=10) #green circle, radius of 10
 
     plt.show()
 
