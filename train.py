@@ -14,7 +14,7 @@ from models import UNet, FCRN_A
 
 @click.command()
 @click.option('-d', '--dataset_name',
-              type=click.Choice(['cell', 'mall', 'ucsd', 'tickets']),
+              type=click.Choice(['cell', 'mall', 'ucsd', 'ticket']),
               required=True,
               help='Dataset to train model on (expect proper HDF5 files).')
 @click.option('-n', '--network_architecture',
