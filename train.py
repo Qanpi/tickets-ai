@@ -14,9 +14,10 @@ from models import UNet, FCRN_A
 
 @click.command()
 @click.option('-d', '--dataset_name',
-              type=click.Choice(['cell', 'mall', 'ucsd', 'ticket']),
+              type=click.Choice(['cell', 'mall', 'ucsd', 'tickets']),
               required=True,
               help='Dataset to train model on (expect proper HDF5 files).')
+@click.option('-p', '--path', type=click.File('r'), help="Path to data to train on.")
 @click.option('-n', '--network_architecture',
               type=click.Choice(['UNet', 'FCRN_A']),
               required=True,
@@ -36,6 +37,7 @@ from models import UNet, FCRN_A
               help='Number of layers in a convolutional block.')
 @click.option('--plot', is_flag=True, help="Generate a live plot.")
 def train(dataset_name: str,
+path: str,
           network_architecture: str,
           learning_rate: float,
           epochs: int,
@@ -54,7 +56,7 @@ def train(dataset_name: str,
 
     for mode in ['train', 'valid']:
         # expected HDF5 files in dataset_name/(train | valid).h5
-        data_path = os.path.join(dataset_name, f"{mode}.h5")
+        data_path = os.path.join(path or dataset_name, f"{mode}.h5")
         # turn on flips only for training dataset
         dataset[mode] = H5Dataset(data_path,
                                   horizontal_flip if mode == 'train' else 0,
