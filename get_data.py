@@ -320,7 +320,7 @@ def generate_tickets_data(path):
 
         def fill_h5(h5, images):
             for i, img_path in enumerate(images):
-                key_path = img_path.replace("tickets", "points")
+                key_path = img_path.replace("ticket", "points")
 
                 image = np.array(Image.open(img_path).convert("RGB"), dtype=np.float32) / 255
                 image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
