@@ -305,7 +305,7 @@ def generate_tickets_data(path):
     image_list = glob(os.path.join(path, "*tickets.*"))
     image_list.sort()
 
-    if len(image_list) < 0: raise ValueError("No training data to package into h5 provided.")
+    if len(image_list) <= 0: raise ValueError("No training data to package into h5 provided.")
 
     dataset_size = len(image_list)
     train_percent = 0.8
