@@ -302,7 +302,7 @@ def generate_cell_data():
 def generate_tickets_data(path):
     # get_and_unzip("", location="tickets")
 
-    image_list = glob(os.path.join(path, "*tickets.*"))
+    image_list = glob(os.path.join(path, "*ticket.*"))
     image_list.sort()
 
     if len(image_list) <= 0: raise ValueError("No training data to package into h5 provided.")
@@ -320,7 +320,7 @@ def generate_tickets_data(path):
 
         def fill_h5(h5, images):
             for i, img_path in enumerate(images):
-                key_path = img_path.replace("ticket", "points")
+                key_path = img_path.replace("ticket", "dots")
 
                 image = np.array(Image.open(img_path).convert("RGB"), dtype=np.float32) / 255
                 image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
