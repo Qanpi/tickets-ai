@@ -25,7 +25,8 @@ from scipy.ndimage import gaussian_filter
 @click.option('--dataset',
               type=click.Choice(['cell', 'mall', 'ucsd', "ticket"]),
               required=True)
-def get_data(dataset: str):
+@click.option('-p', "--path", type=click.File("r"), help="Path to the dataset files to packge into h5 files.")
+def get_data(dataset: str, path: str):
     """
     Get chosen dataset and generate HDF5 files with training
     and validation samples.
@@ -36,7 +37,7 @@ def get_data(dataset: str):
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
         'tickets': generate_tickets_data
-    }[dataset]()
+    }[dataset](path or dataset)
 
 
 def create_hdf5(dataset_name: str,
@@ -298,10 +299,10 @@ def generate_cell_data():
     # cleanup
     # shutil.rmtree('cells')
 
-def generate_tickets_data():
+def generate_tickets_data(path):
     # get_and_unzip("", location="tickets")
 
-    image_list = glob(os.path.join("tickets", "*tickets.*"))
+    image_list = glob(os.path.join(path, "*tickets.*"))
     image_list.sort()
 
     dataset_size = len(image_list)
@@ -309,7 +310,7 @@ def generate_tickets_data():
     split = int(train_percent * dataset_size)
 
     try:
-        train_h5, valid_h5 = create_hdf5("tickets",
+        train_h5, valid_h5 = create_hdf5(path,
                                         train_size=split,
                                         valid_size=dataset_size - split,
                                         img_size=(256, 256),
