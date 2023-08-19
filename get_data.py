@@ -23,7 +23,7 @@ from scipy.ndimage import gaussian_filter
 
 @click.command()
 @click.option('--dataset',
-              type=click.Choice(['cell', 'mall', 'ucsd', "ticket"]),
+              type=click.Choice(['cell', 'mall', 'ucsd', "tickets"]),
               required=True)
 @click.option('-p', "--path", type=click.File("r"), help="Path to the dataset files to packge into h5 files.")
 def get_data(dataset: str, path: str):
