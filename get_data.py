@@ -23,7 +23,7 @@ from scipy.ndimage import gaussian_filter
 
 @click.command()
 @click.option('--dataset',
-              type=click.Choice(['cell', 'mall', 'ucsd']),
+              type=click.Choice(['cell', 'mall', 'ucsd', "ticket"]),
               required=True)
 def get_data(dataset: str):
     """
@@ -247,7 +247,7 @@ def generate_cell_data():
         location='cells'
     )
     # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5('cell',
+    train_h5, valid_h5 = create_hdf5('cells',
                                      train_size=150,
                                      valid_size=50,
                                      img_size=(256, 256),
@@ -268,7 +268,7 @@ def generate_cell_data():
         """
         for i, img_path in enumerate(images):
             # get label path
-            label_path = img_path.replace('cell.png', 'dots.png')
+            label_path = img_path.replace('cell', 'dots')
             # get an image as numpy array
             image = np.array(Image.open(img_path), dtype=np.float32) / 255
             image = np.transpose(image, (2, 0, 1))
@@ -296,10 +296,10 @@ def generate_cell_data():
     valid_h5.close()
 
     # cleanup
-    shutil.rmtree('cells')
+    # shutil.rmtree('cells')
 
 def generate_tickets_data():
-    get_and_unzip("", location="tickets")
+    # get_and_unzip("", location="tickets")
 
     image_list = glob(os.path.join("tickets", "*tickets.*"))
     image_list.sort()
@@ -309,7 +309,7 @@ def generate_tickets_data():
     split = int(train_percent * dataset_size)
 
     try:
-        train_h5, valid_h5 = create_hdf5("ticket",
+        train_h5, valid_h5 = create_hdf5("tickets",
                                         train_size=split,
                                         valid_size=dataset_size - split,
                                         img_size=(256, 256),
@@ -336,7 +336,7 @@ def generate_tickets_data():
     finally: #cleanup
         train_h5.close()
         valid_h5.close()
-        shutil.rmtree("tickets")
+        # shutil.rmtree("tickets")
 
 if __name__ == '__main__':
     get_data()
