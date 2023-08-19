@@ -34,7 +34,8 @@ def get_data(dataset: str):
     {
         'cell': generate_cell_data,
         'mall': generate_mall_data,
-        'ucsd': generate_ucsd_data
+        'ucsd': generate_ucsd_data,
+        'tickets': generate_tickets_data
     }[dataset]()
 
 
@@ -296,6 +297,46 @@ def generate_cell_data():
 
     # cleanup
     shutil.rmtree('cells')
+
+def generate_tickets_data():
+    get_and_unzip("", location="tickets")
+
+    image_list = glob(os.path.join("tickets", "*tickets.*"))
+    image_list.sort()
+
+    dataset_size = len(image_list)
+    train_percent = 0.8
+    split = int(train_percent * dataset_size)
+
+    try:
+        train_h5, valid_h5 = create_hdf5("ticket",
+                                        train_size=split,
+                                        valid_size=dataset_size - split,
+                                        img_size=(256, 256),
+                                        in_channels=3)
+
+        def fill_h5(h5, images):
+            for i, img_path in enumerate(images):
+                key_path = img_path.replace("tickets", "points")
+
+                image = np.array(Image.open(img_path).convert("RGB"), dtype=np.float32) / 255
+                image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
+
+                key = np.array(Image.open(key_path))
+                key = 100.0 * key
+
+                key = gaussian_filter(key, sigma=(1,1), order=0) #generate smoother density map
+
+                h5['images'][i] = image
+                h5['labels'][i, 0] = key
+
+        fill_h5(train_h5, image_list[:split])
+        fill_h5(valid_h5, image_list[split:])
+
+    finally: #cleanup
+        train_h5.close()
+        valid_h5.close()
+        shutil.rmtree("tickets")
 
 if __name__ == '__main__':
     get_data()
