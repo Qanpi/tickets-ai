@@ -3,7 +3,6 @@ from typing import Optional, List
 
 import torch
 import numpy as np
-import plotly.express as px
 
 class Looper():
     """Looper handles epoch loops, logging, and plotting."""
@@ -15,7 +14,6 @@ class Looper():
                  optimizer: torch.optim.Optimizer,
                  data_loader: torch.utils.data.DataLoader,
                  dataset_size: int,
-                 plot: bool=False,
                  validation: bool=False):
         """
         Initialize Looper.
@@ -38,8 +36,6 @@ class Looper():
         self.loader = data_loader
         self.size = dataset_size
         self.validation = validation
-        # self.plots = plots
-        self._plot = plot
         self.running_loss = []
 
     def run(self):
@@ -93,7 +89,7 @@ class Looper():
         self.update_errors()
 
         # update live plot
-        if self._plot:
+        if self.plots is not None:
             self.plot()
 
         # print epoch summary
@@ -113,29 +109,7 @@ class Looper():
         self.mean_abs_err = sum(self.abs_err) / self.size
         self.std = np.array(self.err).std()
 
-    def plot(self):
-        """Plot true vs predicted counts and loss."""
-        # true vs predicted counts
-        true_x, true_y = [[1, max(self.true_values)]] * 2  # y = x
-        px.line(x=true_x, y=true_y)
 
-        # self.plots[0].cla()
-        # self.plots[0].set_title('Train' if not self.validation else 'Valid')
-        # self.plots[0].set_xlabel('True value')
-        # self.plots[0].set_ylabel('Predicted value')
-        # self.plots[0].plot(*true_line, 'r-')
-        # self.plots[0].scatter(self.true_values, self.predicted_values)
-
-        # # loss
-        # epochs = np.arange(1, len(self.running_loss) + 1)
-        # self.plots[1].cla()
-        # self.plots[1].set_title('Train' if not self.validation else 'Valid')
-        # self.plots[1].set_xlabel('Epoch')
-        # self.plots[1].set_ylabel('Loss')
-        # self.plots[1].plot(epochs, self.running_loss)
-
-        # matplotlib.pyplot.pause(0.01)
-        # matplotlib.pyplot.tight_layout()
 
     def log(self):
         """Print current epoch results."""

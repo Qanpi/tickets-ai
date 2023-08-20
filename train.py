@@ -5,12 +5,11 @@ from typing import Union, Optional, List
 import click
 import torch
 import numpy as np
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 
 from data_loader import H5Dataset
 from looper import Looper
 from models import UNet, FCRN_A
-
 
 @click.command()
 @click.argument("data_path", type=click.Path(exists=True), required=True,
@@ -104,12 +103,6 @@ def train(
     )
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 
-    # if plot flag is on, create a live plot (to be updated by Looper)
-    # if plot:
-        # pyplot.ion()
-        # fig, plots = pyplot.subplots(nrows=2, ncols=2)
-    # else:
-    #     plots = [None] * 2
 
     # create training and validation Loopers to handle a single epoch
     train_looper = Looper(
@@ -119,7 +112,6 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
-        plot,
     )
     valid_looper = Looper(
         network,
@@ -128,7 +120,6 @@ def train(
         optimizer,
         dataloader["valid"],
         len(dataset["valid"]),
-        plot,
         validation=True,
     )
 
@@ -158,8 +149,33 @@ def train(
 
         print("\n", "-" * 80, "\n", sep="")
 
+    if plot:
+        fig, plots = plt.subplots(nrows=2, ncols=2)
+        _plot(train_looper, plots=plots[:, 0])
+        _plot(valid_looper, plots=plots[:, 1])
+
     print(f"[Training done] Best result: {current_best}")
 
+def _plot(looper: Looper, plots):
+    """Plot true vs predicted counts and loss."""
+    # true vs predicted counts
+    true_line = [[0, max(looper.true_values)]] * 2  # y = x
+    plots[0].cla()
+    plots[0].set_title('Train' if not looper.validation else 'Valid')
+    plots[0].set_xlabel('True value')
+    plots[0].set_ylabel('Predicted value')
+    plots[0].plot(*true_line, 'r-')
+    plots[0].scatter(looper.true_values, looper.predicted_values)
+
+    # loss
+    epochs = np.arange(1, len(looper.running_loss) + 1)
+    plots[1].cla()
+    plots[1].set_title('Train' if not looper.validation else 'Valid')
+    plots[1].set_xlabel('Epoch')
+    plots[1].set_ylabel('Loss')
+    plots[1].plot(epochs, looper.running_loss)
+
+    plt.show()
 
 if __name__ == "__main__":
     train()
