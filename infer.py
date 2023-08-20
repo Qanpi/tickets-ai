@@ -164,7 +164,7 @@ def _visualize(img, dmap, n, keypoints=None, save=False):
     axes[1].scatter(x=pred_x, y=pred_y, c="#ff0000", s=20, marker="x") 
 
     if save is not None:
-        fig.savefig(save)
+        fig.savefig(save, bbox_inches="tight")
 
     plt.show()
 
