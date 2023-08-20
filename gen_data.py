@@ -242,7 +242,6 @@ def generate_mall_data():
 
 def generate_cell_data(path):
     """Generate HDF5 files for fluorescent cell dataset."""
-
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
     image_list = glob(os.path.join(path, '*cell.*'))
@@ -259,6 +258,8 @@ def generate_cell_data(path):
     dataset_size = len(image_list)
     train_percent = 0.8
     split = int(train_percent * dataset_size)
+
+    counts = []
 
     # create training and validation HDF5 files
     train_h5, valid_h5 = create_hdf5(path,
@@ -287,8 +288,14 @@ def generate_cell_data(path):
 
             # load an RGB image
             label = np.array(Image.open(label_path))
+
             # make a one-channel label array with 100 in red dots positions
-            label = 100.0 * (label[:, :, 0] > 0) if label.ndim == 3 else 100.0 * label
+            label = (label[:, :, 0] > 0) if label.ndim == 3 else label
+            label *= 100.0
+
+            #append the count 
+            counts.append(np.count_nonzero(label))
+
             # generate a density map by applying a Gaussian filter
             label = gaussian_filter(label, sigma=(1, 1), order=0)
 
@@ -299,6 +306,10 @@ def generate_cell_data(path):
     # use first 150 samples for training and the last 50 for validation
     fill_h5(train_h5, image_list[:split])
     fill_h5(valid_h5, image_list[split:])
+
+    print(f"Successfully loaded dataset to ${path}.")
+    print(f"Mean: ${np.mean(counts)}")
+    print(f"Variance: ${np.var(counts)}")
 
     # close HDF5 files
     train_h5.close()
