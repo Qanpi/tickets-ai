@@ -126,9 +126,9 @@ def infer(
         print(f"The true number of objects: {keypoints.shape[0]}")
 
     if visualize:
-        _visualize(img, density_map.squeeze().cpu().detach().numpy(), keypoints)
+        _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, keypoints)
 
-def _visualize(img, dmap, keypoints):
+def _visualize(img, dmap, n, keypoints):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
     fig, axes = plt.subplots(1, 2)
@@ -150,7 +150,7 @@ def _visualize(img, dmap, keypoints):
     # find n_objects peaks 
     kernel = np.full((4, 4), 1)
     peaks = peak_local_max(
-        dmap, footprint=kernel, min_distance=2, num_peaks=28, exclude_border=False
+        dmap, footprint=kernel, min_distance=2, num_peaks=n, exclude_border=False
     )
 
     pred_x = [xy[1] for xy in peaks]
@@ -158,10 +158,9 @@ def _visualize(img, dmap, keypoints):
 
     # plot density map over og image
     axes[1].imshow(img)
-
     axes[1].scatter(x=pred_x, y=pred_y, c="#ff0000", s=20, marker="x") 
 
-    plt.show()
+    fig.show()
 
 if __name__ == "__main__":
     infer()
