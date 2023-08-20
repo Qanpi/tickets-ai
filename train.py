@@ -176,7 +176,15 @@ def _plot(looper: Looper, path):
     plots[1].set_ylabel('Loss')
     plots[1].plot(epochs, looper.running_loss)
 
-    filename = "train.png" if not looper.validation else "valid.png"
+    prefix = "train" if not looper.validation else "valid"
+
+    file_count = 1
+    filename = prefix + file_count + ".png"
+
+    while os.path.exists(os.path.join(path, filename)):
+        file_count += 1
+        filename = prefix + file_count + ".png"
+
     fig.savefig(os.path.join(path, filename))
 
 if __name__ == "__main__":
