@@ -33,7 +33,7 @@ def get_data(dataset: str, path: str):
     """
     # dictionary-based switch statement
     {
-        'cell': generate_cell_data,
+        'cells': generate_cell_data,
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
         'tickets': generate_tickets_data
