@@ -74,6 +74,8 @@ from models import UNet, FCRN_A
     help="A path to an answer image containing true keypoints.",
 )
 @click.option("--visualize", is_flag=True, help="Visualize predicted density map.")
+@click.option("--save", type=click.Path(exists=True), help="Save visualized plots to path.")
+
 def infer(
     infer_path: str,
     valid_path: str,
@@ -84,6 +86,7 @@ def infer(
     one_channel: bool,
     pad: bool,
     visualize: bool,
+    save: str,
 ):
     """Run inference for a single image."""
     # use GPU if available
@@ -126,9 +129,9 @@ def infer(
         print(f"The true number of objects: {keypoints.shape[0]}")
 
     if visualize:
-        _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, keypoints)
+        _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, keypoints, save)
 
-def _visualize(img, dmap, n, keypoints):
+def _visualize(img, dmap, n, keypoints=None, save=False):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
     fig, axes = plt.subplots(1, 2)
@@ -159,6 +162,9 @@ def _visualize(img, dmap, n, keypoints):
     # plot density map over og image
     axes[1].imshow(img)
     axes[1].scatter(x=pred_x, y=pred_y, c="#ff0000", s=20, marker="x") 
+
+    if save is not None:
+        fig.savefig(save)
 
     plt.show()
 
