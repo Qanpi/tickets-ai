@@ -25,7 +25,7 @@ from scipy.ndimage import gaussian_filter
 @click.option('--dataset',
               type=click.Choice(['cell', 'mall', 'ucsd', "tickets"]),
               required=True)
-@click.option('-p', "--path", type=click.Path(exists=True), help="Path to the dataset files to packge into h5 files.")
+@click.option('-p', "--path", type=click.Path(exists=True), help="Path to the dataset files to package into h5 files.")
 def get_data(dataset: str, path: str):
     """
     Get chosen dataset and generate HDF5 files with training
@@ -37,7 +37,7 @@ def get_data(dataset: str, path: str):
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
         'tickets': generate_tickets_data
-    }[dataset](path or dataset)
+    }[dataset](path)
 
 
 def create_hdf5(dataset_name: str,
