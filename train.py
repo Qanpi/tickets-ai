@@ -13,7 +13,7 @@ from models import UNet, FCRN_A
 
 
 @click.command()
-@click.argument("data_path", type=click.Path(exists=True), help="Path to the data (HDF5 files) to train on.", required=True,
+@click.argument("-d", "--data_path", type=click.Path(exists=True), help="Path to the data (HDF5 files) to train on.", required=True,
 )
 @click.option(
     "-n",
