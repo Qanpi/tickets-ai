@@ -105,11 +105,11 @@ def train(
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
 
     # if plot flag is on, create a live plot (to be updated by Looper)
-    if plot:
-        pyplot.ion()
-        fig, plots = pyplot.subplots(nrows=2, ncols=2)
-    else:
-        plots = [None] * 2
+    # if plot:
+        # pyplot.ion()
+        # fig, plots = pyplot.subplots(nrows=2, ncols=2)
+    # else:
+    #     plots = [None] * 2
 
     # create training and validation Loopers to handle a single epoch
     train_looper = Looper(
@@ -119,7 +119,7 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
-        plots[0],
+        plot=plot,
     )
     valid_looper = Looper(
         network,
@@ -128,7 +128,7 @@ def train(
         optimizer,
         dataloader["valid"],
         len(dataset["valid"]),
-        plots[1],
+        plot=plot,
         validation=True,
     )
 
