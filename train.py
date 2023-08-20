@@ -119,7 +119,7 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
-        plot=plot,
+        plot,
     )
     valid_looper = Looper(
         network,
@@ -128,7 +128,7 @@ def train(
         optimizer,
         dataloader["valid"],
         len(dataset["valid"]),
-        plot=plot,
+        plot,
         validation=True,
     )
 
