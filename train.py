@@ -53,6 +53,7 @@ from models import UNet, FCRN_A
 @click.option(
     "--convolutions", default=2, help="Number of layers in a convolutional block."
 )
+@click.option("-v", "--verbose", is_flag=True, help="Whether to log the training information to console (besides file).")
 @click.option("--plot", is_flag=True, help="Generate a live plot.")
 def train(
     data_path: str,
@@ -112,6 +113,7 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
+        data_path
     )
     valid_looper = Looper(
         network,
@@ -120,6 +122,7 @@ def train(
         optimizer,
         dataloader["valid"],
         len(dataset["valid"]),
+        data_path,
         validation=True,
     )
 
