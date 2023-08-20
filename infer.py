@@ -160,7 +160,7 @@ def _visualize(img, dmap, n, keypoints):
     axes[1].imshow(img)
     axes[1].scatter(x=pred_x, y=pred_y, c="#ff0000", s=20, marker="x") 
 
-    fig.show()
+    plt.show()
 
 if __name__ == "__main__":
     infer()
