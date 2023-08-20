@@ -31,13 +31,19 @@ def get_data(dataset: str, path: str):
     Get chosen dataset and generate HDF5 files with training
     and validation samples.
     """
+    path = path or dataset 
+
     # dictionary-based switch statement
-    {
+    data = {
         'cells': generate_cell_data,
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
         'tickets': generate_tickets_data
-    }[dataset](path or dataset)
+    }[dataset](path)
+
+    print(f"Successfully loaded dataset {dataset} to {path}.")
+    print(f"Mean: {np.mean(data)}")
+    print(f"Variance: {np.var(data)}")
 
 
 def create_hdf5(dataset_name: str,
@@ -259,7 +265,7 @@ def generate_cell_data(path):
     train_percent = 0.8
     split = int(train_percent * dataset_size)
 
-    counts = []
+    data = []
 
     # create training and validation HDF5 files
     train_h5, valid_h5 = create_hdf5(path,
@@ -294,7 +300,7 @@ def generate_cell_data(path):
             label = 100.0 * label
 
             #append the count 
-            counts.append(np.count_nonzero(label))
+            data.append(np.count_nonzero(label))
 
             # generate a density map by applying a Gaussian filter
             label = gaussian_filter(label, sigma=(1, 1), order=0)
@@ -307,14 +313,11 @@ def generate_cell_data(path):
     fill_h5(train_h5, image_list[:split])
     fill_h5(valid_h5, image_list[split:])
 
-    print(f"Successfully loaded dataset to ${path}.")
-    print(f"Mean: ${np.mean(counts)}")
-    print(f"Variance: ${np.var(counts)}")
-
     # close HDF5 files
     train_h5.close()
     valid_h5.close()
 
+    return np.array(data)
     # cleanup
     # shutil.rmtree('cells')
 
