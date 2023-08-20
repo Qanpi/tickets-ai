@@ -147,8 +147,9 @@ def _visualize(img, dmap, n, keypoints=None, save=False):
         true_x = [xy[1] for xy in keypoints]
         true_y = [xy[0] for xy in keypoints]
 
-        axes[0].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors="#0000ff")
-        axes[1].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors="#0000ff")
+        edgeColor = "#00ff00"
+        axes[0].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors=edgeColor)
+        axes[1].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors=edgeColor)
 
     # find n_objects peaks 
     kernel = np.full((4, 4), 1)
