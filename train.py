@@ -65,6 +65,7 @@ def train(
     vertical_flip: float,
     unet_filters: int,
     convolutions: int,
+    verbose: bool,
     plot: bool,
 ):
     """Train chosen model on selected dataset."""
@@ -113,7 +114,8 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
-        data_path
+        data_path,
+        verbose=verbose
     )
     valid_looper = Looper(
         network,
@@ -123,6 +125,7 @@ def train(
         dataloader["valid"],
         len(dataset["valid"]),
         data_path,
+        verbose=verbose,
         validation=True,
     )
 
