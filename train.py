@@ -6,7 +6,6 @@ import click
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython.display import clear_output
 
 from data_loader import H5Dataset
 from looper import Looper
@@ -141,9 +140,7 @@ def train(
     for epoch in range(epochs):
         print(f"Epoch {epoch + 1}\n", file=log_file)
         
-        if verbose: 
-            clear_output()
-            print(f"Epoch {epoch+1}")
+        if verbose: print(f"Epoch {epoch+1}")
 
         # run training epoch and update learning rate
         train_looper.run()
