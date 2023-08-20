@@ -88,10 +88,6 @@ class Looper():
         # calculate errors and standard deviation
         self.update_errors()
 
-        # update live plot
-        if self.plots is not None:
-            self.plot()
-
         # print epoch summary
         self.log()
 
