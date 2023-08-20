@@ -124,7 +124,7 @@ def infer(
 
     if valid_path is not None:
         answer_key = np.array(Image.open(valid_path.name).convert("1"))
-        keypoints = np.argwhere(answer_key == 1)
+        keypoints = np.argwhere(answer_key)
 
         print(f"The true number of objects: {keypoints.shape[0]}")
 
