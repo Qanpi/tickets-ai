@@ -259,7 +259,7 @@ def generate_cell_data(path):
 
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
-    image_list = glob(os.path.join(path, '*cell*.*'))
+    image_list = glob(os.path.join(path, '*cell.*'))
     image_list.sort()
 
     def fill_h5(h5, images):
@@ -272,7 +272,7 @@ def generate_cell_data(path):
         """
         for i, img_path in enumerate(images):
             # get label path
-            label_path = img_path.replace('cell', 'dots')
+            label_path = img_path.replace('cell.', 'dots.')
             # get an image as numpy array
             image = np.array(Image.open(img_path), dtype=np.float32) / 255
             image = np.transpose(image, (2, 0, 1))
