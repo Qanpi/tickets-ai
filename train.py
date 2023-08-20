@@ -179,11 +179,11 @@ def _plot(looper: Looper, path):
     prefix = "train" if not looper.validation else "valid"
 
     file_count = 1
-    filename = prefix + file_count + ".png"
+    filename = f"{prefix}{file_count}.png"
 
     while os.path.exists(os.path.join(path, filename)):
         file_count += 1
-        filename = prefix + file_count + ".png"
+        filename = f"{prefix}{file_count}.png"
 
     fig.savefig(os.path.join(path, filename))
 
