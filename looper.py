@@ -90,9 +90,6 @@ class Looper():
         # calculate errors and standard deviation
         self.update_errors()
 
-        # print epoch summary
-        self.log()
-
         return self.mean_abs_err
 
     def update_errors(self):
