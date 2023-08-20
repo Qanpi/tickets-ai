@@ -74,7 +74,7 @@ from models import UNet, FCRN_A
     help="A path to an answer image containing true keypoints.",
 )
 @click.option("--visualize", is_flag=True, help="Visualize predicted density map.")
-@click.option("--save", type=click.Path(exists=True), help="Save visualized plots to path.")
+@click.option("--save", type=click.Path(exists=False), help="Save visualized plots to path.")
 
 def infer(
     infer_path: str,
