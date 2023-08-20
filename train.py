@@ -13,15 +13,7 @@ from models import UNet, FCRN_A
 
 
 @click.command()
-@click.option(
-    "-d",
-    "--dataset_name",
-    type=click.Choice(["cell", "mall", "ucsd", "tickets"]),
-    required=True,
-    help="Dataset to train model on (expect proper HDF5 files).",
-)
-@click.option(
-    "-p", "--path", type=click.Path(exists=True), help="Path to data to train on."
+@click.argument("data_path", type=click.Path(exists=True), help="Path to the data (HDF5 files) to train on.", required=True,
 )
 @click.option(
     "-n",
@@ -64,8 +56,7 @@ from models import UNet, FCRN_A
 )
 @click.option("--plot", is_flag=True, help="Generate a live plot.")
 def train(
-    dataset_name: str,
-    path: str,
+    data_path: str,
     network_architecture: str,
     learning_rate: float,
     epochs: int,
@@ -83,11 +74,9 @@ def train(
     dataset = {}  # training and validation HDF5-based datasets
     dataloader = {}  # training and validation dataloaders
 
-    path = path or dataset_name
-
     for mode in ["train", "valid"]:
         # expected HDF5 files in dataset_name/(train | valid).h5
-        data_path = os.path.join(path, f"{mode}.h5")
+        data_path = os.path.join(data_path, f"{mode}.h5")
         # turn on flips only for training dataset
         dataset[mode] = H5Dataset(
             data_path,
@@ -99,7 +88,8 @@ def train(
         )
 
     # only UCSD dataset provides greyscale images instead of RGB
-    input_channels = 1 if dataset_name == "ucsd" else 3
+    # input_channels = 1 if dataset_name == "ucsd" else 3
+    input_channels = 3
 
     # initialize a model based on chosen network_architecture
     network = {"UNet": UNet, "FCRN_A": FCRN_A}[network_architecture](
@@ -161,7 +151,7 @@ def train(
             current_best = result
             torch.save(
                 network.state_dict(),
-                os.path.join(path, f"{network_architecture}.pth"),
+                os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
             print(f"\nNew best result: {result}")
