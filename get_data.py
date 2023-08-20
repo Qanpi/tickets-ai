@@ -306,7 +306,7 @@ def generate_tickets_data(path):
     image_list.sort()
 
     dataset_size = len(image_list)
-    if len(dataset_size) <= 0: raise ValueError("No training data to package into h5 provided.")
+    if dataset_size <= 0: raise ValueError("No training data to package into h5 provided.")
 
     train_percent = 0.8
     split = int(train_percent * dataset_size)
