@@ -250,17 +250,21 @@ def generate_cell_data(path):
         )
         path = "cells"
 
-    # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5(path,
-                                     train_size=150,
-                                     valid_size=50,
-                                     img_size=(256, 256),
-                                     in_channels=3)
-
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
     image_list = glob(os.path.join(path, '*cell.*'))
     image_list.sort()
+
+    dataset_size = len(image_list)
+    train_percent = 0.8
+    split = int(train_percent * dataset_size)
+
+    # create training and validation HDF5 files
+    train_h5, valid_h5 = create_hdf5(path,
+                                     train_size=split,
+                                     valid_size=dataset_size-split,
+                                     img_size=(256, 256),
+                                     in_channels=3)
 
     def fill_h5(h5, images):
         """
@@ -283,7 +287,7 @@ def generate_cell_data(path):
             # load an RGB image
             label = np.array(Image.open(label_path))
             # make a one-channel label array with 100 in red dots positions
-            label = 100.0 * (label[:, :, 0] > 0) if label.shape[1] == 3 else 100 * label
+            label = 100.0 * (label[:, :, 0] > 0) if label.shape[0] == 3 else 100 * label
             # generate a density map by applying a Gaussian filter
             label = gaussian_filter(label, sigma=(1, 1), order=0)
 
@@ -292,8 +296,8 @@ def generate_cell_data(path):
             h5['labels'][i, 0] = label
 
     # use first 150 samples for training and the last 50 for validation
-    fill_h5(train_h5, image_list[:150])
-    fill_h5(valid_h5, image_list[150:])
+    fill_h5(train_h5, image_list[:split])
+    fill_h5(valid_h5, image_list[split:])
 
     # close HDF5 files
     train_h5.close()
@@ -305,12 +309,14 @@ def generate_cell_data(path):
 def generate_tickets_data(path):
     # get_and_unzip("", location="tickets")
 
+    if path is None: 
+      path = "tickets"
+      pass #load from zip
+
     image_list = glob(os.path.join(path, "*ticket*.*"))
     image_list.sort()
 
     dataset_size = len(image_list)
-    if dataset_size <= 0: raise ValueError("No training data to package into h5 provided.")
-
     train_percent = 0.8
     split = int(train_percent * dataset_size)
 
