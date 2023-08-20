@@ -150,13 +150,14 @@ def train(
         print("\n", "-" * 80, "\n", sep="")
 
     if plot:
-        fig, plots = plt.subplots(nrows=2, ncols=2)
-        _plot(train_looper, plots=plots[:, 0])
-        _plot(valid_looper, plots=plots[:, 1])
+        _plot(train_looper)
+        _plot(valid_looper)
+        plt.show()
 
     print(f"[Training done] Best result: {current_best}")
 
-def _plot(looper: Looper, plots):
+def _plot(looper: Looper):
+    fig, plots = plt.subplots(nrows=1, ncols=2)
     """Plot true vs predicted counts and loss."""
     # true vs predicted counts
     true_line = [[0, max(looper.true_values)]] * 2  # y = x
@@ -174,8 +175,6 @@ def _plot(looper: Looper, plots):
     plots[1].set_xlabel('Epoch')
     plots[1].set_ylabel('Loss')
     plots[1].plot(epochs, looper.running_loss)
-
-    plt.show()
 
 if __name__ == "__main__":
     train()
