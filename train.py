@@ -176,5 +176,7 @@ def _plot(looper: Looper):
     plots[1].set_ylabel('Loss')
     plots[1].plot(epochs, looper.running_loss)
 
+    fig.savefig("train.png" if not looper.validation else "valid.png")
+
 if __name__ == "__main__":
     train()
