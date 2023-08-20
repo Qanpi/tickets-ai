@@ -283,7 +283,7 @@ def generate_cell_data(path):
             # load an RGB image
             label = np.array(Image.open(label_path))
             # make a one-channel label array with 100 in red dots positions
-            label = 100.0 * (label[:, :, 0] > 0)
+            label = 100.0 * (label[:, :, 0] > 0) if label.shape[1] == 3 else 100 * label
             # generate a density map by applying a Gaussian filter
             label = gaussian_filter(label, sigma=(1, 1), order=0)
 
