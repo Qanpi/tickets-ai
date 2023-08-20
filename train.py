@@ -161,7 +161,6 @@ def train(
                 os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
-
             print(f"New best result: {result}", file=log_file)
 
         print("-" * 50, "\n", sep="", file=log_file)
