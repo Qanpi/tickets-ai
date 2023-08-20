@@ -291,7 +291,7 @@ def generate_cell_data(path):
 
             # make a one-channel label array with 100 in red dots positions
             label = (label[:, :, 0] > 0) if label.ndim == 3 else label
-            label *= 100.0
+            label = 100.0 * label
 
             #append the count 
             counts.append(np.count_nonzero(label))
