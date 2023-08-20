@@ -25,7 +25,7 @@ from scipy.ndimage import gaussian_filter
 @click.option("-d", '--dataset',
               type=click.Choice(['cells', 'mall', 'ucsd', "tickets"]),
               required=True)
-@click.option('-p', "--path", type=click.Path(exists=True), help="Path to the dataset files to package into h5 files.")
+@click.option('-p', "--path", type=click.Path(), required=True, help="Path to the dataset files to package into h5 files.")
 def get_data(dataset: str, path: str):
     """
     Get chosen dataset and generate HDF5 files with training
@@ -243,12 +243,11 @@ def generate_mall_data():
 def generate_cell_data(path):
     """Generate HDF5 files for fluorescent cell dataset."""
     # download and extract dataset
-    if path is None:
+    if not os.path.isdir(path):
         get_and_unzip(
             'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
-            location="cells"
+            location=path
         )
-        path = "cells"
 
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
