@@ -37,7 +37,7 @@ def get_data(dataset: str, path: str):
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
         'tickets': generate_tickets_data
-    }[dataset](path)
+    }[dataset](path or dataset)
 
 
 def create_hdf5(dataset_name: str,
@@ -242,16 +242,18 @@ def generate_mall_data():
 
 def generate_cell_data(path):
     """Generate HDF5 files for fluorescent cell dataset."""
-    # download and extract dataset
-    if not os.path.isdir(path):
-        get_and_unzip(
-            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
-            location=path
-        )
 
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
     image_list = glob(os.path.join(path, '*cell.*'))
+
+    # download and extract dataset
+    if len(image_list) == 0:
+        get_and_unzip(
+            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
+            location=path
+        )
+    
     image_list.sort()
 
     dataset_size = len(image_list)
