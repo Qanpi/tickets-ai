@@ -176,7 +176,7 @@ def _log(looper: Looper, log_file):
             f"\tAverage loss: {looper.running_loss[-1]:3.4f}\n"
             f"\tMean error: {looper.mean_err:3.3f}\n"
             f"\tMean absolute error: {looper.mean_abs_err:3.3f}\n"
-            f"\tError deviation: {looper.std:3.3f}", file=log_file)
+            f"\tError deviation: {looper.std:3.3f}\n", file=log_file)
     
 
 def _plot(looper: Looper, path):
