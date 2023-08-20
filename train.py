@@ -76,10 +76,10 @@ def train(
 
     for mode in ["train", "valid"]:
         # expected HDF5 files in dataset_name/(train | valid).h5
-        data_path = os.path.join(data_path, f"{mode}.h5")
+        path = os.path.join(data_path, f"{mode}.h5")
         # turn on flips only for training dataset
         dataset[mode] = H5Dataset(
-            data_path,
+            path,
             horizontal_flip if mode == "train" else 0,
             vertical_flip if mode == "train" else 0,
         )
