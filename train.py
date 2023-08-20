@@ -150,6 +150,9 @@ def train(
         with torch.no_grad():
             result = valid_looper.run()
 
+        _log(train_looper, log_file)
+        _log(valid_looper, log_file)
+
         # update checkpoint if new best is reached
         if result < current_best:
             current_best = result
@@ -158,8 +161,6 @@ def train(
                 os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
-            _log(train_looper, log_file)
-            _log(valid_looper, log_file)
 
             print(f"New best result: {result}", file=log_file)
 
