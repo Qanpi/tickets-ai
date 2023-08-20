@@ -43,7 +43,7 @@ def get_data(dataset: str, path: str):
 
     print(f"Successfully loaded dataset {dataset} to {path}.")
     print(f"Mean: {np.mean(data)}")
-    print(f"Variance: {np.var(data)}")
+    print(f"Standard deviation: {np.std(data)}")
 
 
 def create_hdf5(dataset_name: str,
