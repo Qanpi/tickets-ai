@@ -22,8 +22,8 @@ from scipy.ndimage import gaussian_filter
 
 
 @click.command()
-@click.option('--dataset',
-              type=click.Choice(['cell', 'mall', 'ucsd', "tickets"]),
+@click.option("-d", '--dataset',
+              type=click.Choice(['cells', 'mall', 'ucsd', "tickets"]),
               required=True)
 @click.option('-p', "--path", type=click.Path(exists=True), help="Path to the dataset files to package into h5 files.")
 def get_data(dataset: str, path: str):
@@ -240,15 +240,18 @@ def generate_mall_data():
     shutil.rmtree('mall_dataset')
 
 
-def generate_cell_data():
+def generate_cell_data(path):
     """Generate HDF5 files for fluorescent cell dataset."""
     # download and extract dataset
-    get_and_unzip(
-        'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
-        location='cells'
-    )
+    if path is None:
+        get_and_unzip(
+            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
+            location="cells"
+        )
+        path = "cells"
+
     # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5('cells',
+    train_h5, valid_h5 = create_hdf5(path,
                                      train_size=150,
                                      valid_size=50,
                                      img_size=(256, 256),
@@ -256,7 +259,7 @@ def generate_cell_data():
 
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
-    image_list = glob(os.path.join('cells', '*cell.*'))
+    image_list = glob(os.path.join(path, '*cell*.*'))
     image_list.sort()
 
     def fill_h5(h5, images):
@@ -302,7 +305,7 @@ def generate_cell_data():
 def generate_tickets_data(path):
     # get_and_unzip("", location="tickets")
 
-    image_list = glob(os.path.join(path, "*ticket.*"))
+    image_list = glob(os.path.join(path, "*ticket*.*"))
     image_list.sort()
 
     dataset_size = len(image_list)
