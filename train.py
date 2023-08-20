@@ -157,7 +157,7 @@ def train(
     print(f"[Training done] Best result: {current_best}")
 
 def _plot(looper: Looper):
-    fig, plots = plt.subplots(nrows=1, ncols=2)
+    fig, plots = plt.subplots(nrows=1, ncols=2, figsize=(16, 9))
     """Plot true vs predicted counts and loss."""
     # true vs predicted counts
     true_line = [[0, max(looper.true_values)]] * 2  # y = x
