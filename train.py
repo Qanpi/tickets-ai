@@ -114,8 +114,6 @@ def train(
         optimizer,
         dataloader["train"],
         len(dataset["train"]),
-        data_path,
-        verbose=verbose
     )
     valid_looper = Looper(
         network,
@@ -124,16 +122,23 @@ def train(
         optimizer,
         dataloader["valid"],
         len(dataset["valid"]),
-        data_path,
-        verbose=verbose,
         validation=True,
     )
+
+    id = 1
+    log_path = os.path.join(data_path, f"log{id}.txt")
+
+    while os.path.exists(log_path): 
+        id += 1
+        log_path = os.path.join(data_path, f"log{id}.txt")
+
+    log_file = open(log_path, "a")
 
     # current best results (lowest mean absolute error on validation set)
     current_best = np.infty
 
     for epoch in range(epochs):
-        print(f"Epoch {epoch + 1}\n")
+        print(f"Epoch {epoch + 1}\n", file=log_file)
 
         # run training epoch and update learning rate
         train_looper.run()
@@ -151,9 +156,12 @@ def train(
                 os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
-            print(f"\nNew best result: {result}")
+            _log(train_looper, log_file)
+            _log(valid_looper, log_file)
 
-        print("\n", "-" * 80, "\n", sep="")
+            print(f"New best result: {result}", file=log_file)
+
+        print("-" * 50, "\n", sep="", file=log_file)
 
     if plot:
         _plot(train_looper, data_path)
@@ -161,6 +169,15 @@ def train(
         plt.show()
 
     print(f"[Training done] Best result: {current_best}")
+
+def _log(looper: Looper, log_file):
+    """Print current epoch results."""
+    print(f"{'Train' if not looper.validation else 'Valid'}:\n"
+            f"\tAverage loss: {looper.running_loss[-1]:3.4f}\n"
+            f"\tMean error: {looper.mean_err:3.3f}\n"
+            f"\tMean absolute error: {looper.mean_abs_err:3.3f}\n"
+            f"\tError deviation: {looper.std:3.3f}", file=log_file)
+    
 
 def _plot(looper: Looper, path):
     fig, plots = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))

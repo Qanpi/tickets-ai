@@ -15,8 +15,6 @@ class Looper():
                  optimizer: torch.optim.Optimizer,
                  data_loader: torch.utils.data.DataLoader,
                  dataset_size: int,
-                 log_path: str,
-                 verbose: bool=False,
                  validation: bool=False,
                  ):
         """
@@ -39,9 +37,7 @@ class Looper():
         self.optimizer = optimizer
         self.loader = data_loader
         self.size = dataset_size
-        self.log_path = log_path
         self.validation = validation
-        self.verbose = verbose
         self.running_loss = []
 
     def run(self):
@@ -110,26 +106,3 @@ class Looper():
         self.mean_err = sum(self.err) / self.size
         self.mean_abs_err = sum(self.abs_err) / self.size
         self.std = np.array(self.err).std()
-
-    def log(self):
-        """Print current epoch results."""
-        report = (f"{'Train' if not self.validation else 'Valid'}:\n",
-              f"\tAverage loss: {self.running_loss[-1]:3.4f}\n",
-              f"\tMean error: {self.mean_err:3.3f}\n",
-              f"\tMean absolute error: {self.mean_abs_err:3.3f}\n",
-              f"\tError deviation: {self.std:3.3f}\n\n")
-        
-        if self.verbose:
-            print(report)
-        
-        file_count = 1
-        filepath = os.path.join(self.log_path, f"run{file_count}.txt")
-
-        while os.path.exists(filepath): 
-            file_count += 1
-            filepath = os.path.join(self.log_path, f"run{file_count}.txt")
-
-        with open(filepath, "a") as log: 
-            log.writelines(report)
-
-
