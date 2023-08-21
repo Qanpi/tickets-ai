@@ -321,7 +321,7 @@ def generate_cell_data(path):
     # download and extract dataset
     if len(image_list) == 0:
         get_and_unzip(
-            'http://www.robots.ox.ac.uk/~vgg/research/counting/cell.zip',
+            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
             location=image_path
         )
     
