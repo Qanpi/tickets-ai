@@ -38,7 +38,8 @@ def get_data(dataset: str, path: str):
         'cell': generate_cell_data,
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
-        'ticket': generate_ticket_data
+        'ticket': generate_ticket_data,
+        "blueberry": generate_blueberry_data
     }[dataset](path)
 
     print(f"Successfully loaded dataset {dataset} to {path}.")
