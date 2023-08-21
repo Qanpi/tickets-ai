@@ -23,7 +23,7 @@ from scipy.ndimage import gaussian_filter
 
 @click.command()
 @click.option("-d", '--dataset',
-              type=click.Choice(['cells', 'mall', 'ucsd', "tickets"]),
+              type=click.Choice(['cell', 'mall', 'ucsd', "ticket"]),
               required=True)
 @click.option('-p', "--path", type=click.Path(exists=False), required=True, help="Path to a directory called 'data' which will contain the image files.")
 def get_data(dataset: str, path: str):
@@ -35,10 +35,10 @@ def get_data(dataset: str, path: str):
 
     # dictionary-based switch statement
     data = {
-        'cells': generate_cell_data,
+        'cell': generate_cell_data,
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
-        'tickets': generate_tickets_data
+        'ticket': generate_ticket_data
     }[dataset](path)
 
     print(f"Successfully loaded dataset {dataset} to {path}.")
@@ -245,18 +245,82 @@ def generate_mall_data():
     # cleanup
     shutil.rmtree('mall_dataset')
 
+def generate_blueberry_data(path): 
+    image_path = os.path.join(path, "img")
+    image_list = glob(os.path.join(image_path, '.jpg'))
+
+    if len(image_list) == 0:
+        raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
+    
+    dataset_size = len(image_list)
+    train_percent = 0.8
+    split = int(train_percent * dataset_size)
+
+    data = []
+
+    # create training and validation HDF5 files
+    train_h5, valid_h5 = create_hdf5(path,
+                                     train_size=split,
+                                     valid_size=dataset_size-split,
+                                     img_size=(256, 256),
+                                     in_channels=3)
+    
+    def fill_h5(h5, images):
+        """
+        Save images and labels in given HDF5 file.
+
+        Args:
+            h5: HDF5 file
+            images: the list of images paths
+        """
+        for i, img_path in enumerate(images):
+            # get label path
+            label_path = img_path.replace('blueberry.', 'dots.')
+            # get an image as numpy array
+            image = np.array(Image.open(img_path), dtype=np.float32) / 255
+            image = np.transpose(image, (2, 0, 1))
+
+            # convert a label image into a density map: dataset provides labels
+            # in the form on an image with red dots placed in objects position
+
+            # load an RGB image
+            label = np.array(Image.open(label_path))
+
+            # make a one-channel label array with 100 in dots positions
+            label = 100.0 * label
+
+            #append the count 
+            data.append(np.count_nonzero(label))
+
+            # generate a density map by applying a Gaussian filter
+            label = gaussian_filter(label, sigma=(1, 1), order=0)
+
+            # save data to HDF5 file
+            h5['images'][i] = image
+            h5['labels'][i, 0] = label
+
+    # use first 150 samples for training and the last 50 for validation
+    fill_h5(train_h5, image_list[:split])
+    fill_h5(valid_h5, image_list[split:])
+
+    # close HDF5 files
+    train_h5.close()
+    valid_h5.close()
+
+    return np.array(data)
+
 
 def generate_cell_data(path):
     """Generate HDF5 files for fluorescent cell dataset."""
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
     image_path = os.path.join(path, "img")
-    image_list = glob(os.path.join(image_path, '*cell.*'))
+    image_list = glob(os.path.join(image_path, '*cell*.*'))
 
     # download and extract dataset
     if len(image_list) == 0:
         get_and_unzip(
-            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
+            'http://www.robots.ox.ac.uk/~vgg/research/counting/cell.zip',
             location=image_path
         )
     
@@ -320,16 +384,16 @@ def generate_cell_data(path):
 
     return np.array(data)
     # cleanup
-    # shutil.rmtree('cells')
+    # shutil.rmtree('cell')
 
-def generate_tickets_data(path):
-    # get_and_unzip("", location="tickets")
+def generate_ticket_data(path):
+    image_path = os.path.join(path, "img")
+    image_list = glob(os.path.join(image_path, "*ticket*.*"))
 
-    if path is None: 
-      path = "tickets"
-      pass #load from zip
-
-    image_list = glob(os.path.join(path, "*ticket*.*"))
+    # download and extract dataset
+    if len(image_list) == 0:
+        raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
+    
     image_list.sort()
 
     dataset_size = len(image_list)
@@ -364,7 +428,7 @@ def generate_tickets_data(path):
     finally: #cleanup
         train_h5.close()
         valid_h5.close()
-        # shutil.rmtree("tickets")
+        # shutil.rmtree("ticket")
 
 if __name__ == '__main__':
     get_data()
