@@ -23,7 +23,7 @@ from scipy.ndimage import gaussian_filter
 
 @click.command()
 @click.option("-d", '--dataset',
-              type=click.Choice(['cell', 'mall', 'ucsd', "ticket"]),
+              type=click.Choice(['cell', 'mall', 'ucsd', "ticket", "blueberry"]),
               required=True)
 @click.option('-p', "--path", type=click.Path(exists=False), required=True, help="Path to a directory called 'data' which will contain the image files.")
 def get_data(dataset: str, path: str):
