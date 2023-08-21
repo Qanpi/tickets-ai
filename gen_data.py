@@ -248,7 +248,7 @@ def generate_mall_data():
 
 def generate_blueberry_data(path): 
     image_path = os.path.join(path, "img")
-    image_list = glob(os.path.join(image_path, '.jpg'))
+    image_list = glob(os.path.join(image_path, '*blueberry.png'))
 
     if len(image_list) == 0:
         raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
