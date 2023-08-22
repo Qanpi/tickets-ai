@@ -134,7 +134,7 @@ def train(
     )
 
     log_file = None
-    
+
     if save is not None:
         os.makedirs(save)
         log_file = open(os.path.join(save, "log.txt"), "a")
@@ -143,7 +143,7 @@ def train(
     current_best = np.infty
 
     for epoch in range(epochs):
-        _log(f"Epoch {epoch + 1}\n", log_file, True) #always print this
+        _log(f"Epoch {epoch + 1}", log_file, True) #always print this
 
         # run training epoch and update learning rate
         train_looper.run()
@@ -166,7 +166,7 @@ def train(
 
             _log(f"New best result: {result}", log_file, verbose)
 
-        _log("-" * 50 + "\n", log_file, verbose)
+        _log("-" * 50, log_file, verbose)
 
     if save is not None:
         _plot(train_looper, save)
