@@ -5,7 +5,7 @@ import torch
 import numpy as np
 import os
 
-class self():
+class Looper():
     """self handles epoch loops, logging, and plotting."""
 
     def __init__(self,
