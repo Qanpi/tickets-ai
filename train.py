@@ -136,8 +136,13 @@ def train(
     log_file = None
 
     if save is not None:
-        os.makedirs(save)
-        log_file = open(os.path.join(save, "log.txt"), "a")
+        os.makedirs(save, exist_ok=True)
+
+        id = 1
+        while os.path.exists(path := os.path.join(save, f"log{id}.txt")):
+            id += 1
+        
+        log_file = open(path, "a")
 
     # current best results (lowest mean absolute error on validation set)
     current_best = np.infty
@@ -202,7 +207,12 @@ def _plot(looper: Looper, path):
     plots[1].plot(epochs, looper.running_loss)
 
     prefix = "train" if not looper.validation else "valid"
-    fig.savefig(os.path.join(path, f"{prefix}.png")) 
+
+    id = 1
+    while os.path.exists(save_path := os.path.join(path, f"{prefix}{id}.png")):
+        id += 1
+
+    fig.savefig(os.path.join(save_path, f"{prefix}.png")) 
 
 if __name__ == "__main__":
     train()
