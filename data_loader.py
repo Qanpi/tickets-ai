@@ -8,6 +8,7 @@ import torch
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image, ImageOps
+from scipy import ndimage
 
 
 class H5Dataset(Dataset):
@@ -57,12 +58,9 @@ class H5Dataset(Dataset):
             MAX_ANGLE = 30
             angle = randint(-MAX_ANGLE, MAX_ANGLE)
 
-            img_rotated = Image.fromarray(img).rotate(angle)
-            img = np.array(img_rotated)
-
-            label_rotated = Image.fromarray(label).rotate(angle)
-            label = np.array(label_rotated)
-
+            img = ndimage.rotate(img, angle, reshape=False)
+            label = ndimage.rotate(label, angle, reshape=False)
+  
         return img, label
 
 
