@@ -133,7 +133,11 @@ def train(
         validation=True,
     )
 
-    log_file = open(os.path.join(save, "log.txt"), "a") if save is not None else None
+    log_file = None
+    
+    if save is not None:
+        os.makedirs(save)
+        log_file = open(os.path.join(save, "log.txt"), "a")
 
     # current best results (lowest mean absolute error on validation set)
     current_best = np.infty
