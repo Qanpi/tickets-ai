@@ -139,7 +139,7 @@ def train(
     current_best = np.infty
 
     for epoch in range(epochs):
-        _log(f"Epoch {epoch + 1}\n")
+        _log(f"Epoch {epoch + 1}\n", log_file, True) #always print this
 
         # run training epoch and update learning rate
         train_looper.run()
@@ -149,9 +149,8 @@ def train(
         with torch.no_grad():
             result = valid_looper.run()
 
-        train_looper_results = 
-        _log(train_looper, log_file)
-        _log(valid_looper, log_file)
+        _log(train_looper.get_results(), log_file, verbose)
+        _log(valid_looper.get_results(), log_file, verbose)
 
         # update checkpoint if new best is reached
         if result < current_best:
@@ -161,24 +160,18 @@ def train(
                 os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
-            print(f"New best result: {result}", file=log_file)
+            _log(f"New best result: {result}", log_file, verbose)
 
-        print("-" * 50, "\n", sep="", file=log_file)
+        _log("-" * 50 + "\n", log_file, verbose)
 
     if save is not None:
-        _plot(train_looper, data_path)
-        _plot(valid_looper, data_path)
-        plt.show()
+        _plot(train_looper, save)
+        _plot(valid_looper, save)
 
-    print(f"[Training done] Best result: {current_best}")
+    _log(f"[Training done] Best result: {current_best}", log_file, True)
 
 def _log(text: str, log_file=None, verbose=False):
-    """Print current epoch results."""
-    results = (f"{'Train' if not looper.validation else 'Valid'}:\n"
-            f"\tAverage loss: {looper.running_loss[-1]:3.4f}\n"
-            f"\tMean error: {looper.mean_err:3.3f}\n"
-            f"\tMean absolute error: {looper.mean_abs_err:3.3f}\n"
-            f"\tError deviation: {looper.std:3.3f}\n")
+    """Print text to file or CLI or both, depending on the options."""
     
     if log_file is not None: print(text, file=log_file)
     if verbose: print(text)
@@ -205,15 +198,7 @@ def _plot(looper: Looper, path):
     plots[1].plot(epochs, looper.running_loss)
 
     prefix = "train" if not looper.validation else "valid"
-
-    file_count = 1
-    filename = f"{prefix}{file_count}.png"
-
-    while os.path.exists(os.path.join(path, filename)):
-        file_count += 1
-        filename = f"{prefix}{file_count}.png"
-
-    fig.savefig(os.path.join(path, filename))
+    fig.savefig(os.path.join(path, f"{prefix}.png")) 
 
 if __name__ == "__main__":
     train()
