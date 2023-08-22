@@ -1,12 +1,12 @@
-"""Looper implementation."""
+"""self implementation."""
 from typing import Optional, List
 
 import torch
 import numpy as np
 import os
 
-class Looper():
-    """Looper handles epoch loops, logging, and plotting."""
+class self():
+    """self handles epoch loops, logging, and plotting."""
 
     def __init__(self,
                  network: torch.nn.Module,
@@ -18,7 +18,7 @@ class Looper():
                  validation: bool=False,
                  ):
         """
-        Initialize Looper.
+        Initialize self.
 
         Args:
             network: already initialized model
@@ -103,3 +103,10 @@ class Looper():
         self.mean_err = sum(self.err) / self.size
         self.mean_abs_err = sum(self.abs_err) / self.size
         self.std = np.array(self.err).std()
+    
+    def get_results(self):
+        return (f"{'Train' if not self.validation else 'Valid'}:\n"
+            f"\tAverage loss: {self.running_loss[-1]:3.4f}\n"
+            f"\tMean error: {self.mean_err:3.3f}\n"
+            f"\tMean absolute error: {self.mean_abs_err:3.3f}\n"
+            f"\tError deviation: {self.std:3.3f}\n")

@@ -1,21 +1,23 @@
 """PyTorch dataset for HDF5 files generated with `get_data.py`."""
 import os
-from random import random
+from random import random, randint
 from typing import Optional
 
 import h5py
 import torch
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
+from PIL import Image, ImageOps
 
 
 class H5Dataset(Dataset):
-    """PyTorch dataset for HDF5 files generated with `get_data.py`."""
+    """PyTorch dataset for HDF5 files generated with `gen_data.py`."""
 
     def __init__(self,
                  dataset_path: str,
                  horizontal_flip: float=0.0,
-                 vertical_flip: float=0.0):
+                 vertical_flip: float=0.0,
+                 rotation_chance: float=0.0):
         """
         Initialize flips probabilities and pointers to a HDF5 file.
 
@@ -30,6 +32,7 @@ class H5Dataset(Dataset):
         self.labels = self.h5['labels']
         self.horizontal_flip = horizontal_flip
         self.vertical_flip = vertical_flip
+        self.rotation_chance = rotation_chance
 
     def __len__(self):
         """Return no. of samples in HDF5 file."""
@@ -37,21 +40,30 @@ class H5Dataset(Dataset):
 
     def __getitem__(self, index: int):
         """Return next sample (randomly flipped)."""
-        # if both flips probabilities are zero return an image and a label
-        if not (self.horizontal_flip or self.vertical_flip):
-            return self.images[index], self.labels[index]
 
         # axis = 1 (vertical flip), axis = 2 (horizontal flip)
-        axis_to_flip = []
+        img = self.images[index]
+        label = self.labels[index]
 
         if random() < self.vertical_flip:
-            axis_to_flip.append(1)
+            img = np.flip(img, axis=1).copy()
+            label = np.flip(label, axis=1).copy()
 
         if random() < self.horizontal_flip:
-            axis_to_flip.append(2)
+            img = np.flip(img, axis=2).copy()
+            label = np.flip(label, axis=2).copy()
 
-        return (np.flip(self.images[index], axis=axis_to_flip).copy(),
-                np.flip(self.labels[index], axis=axis_to_flip).copy())
+        if random() < self.rotation_chance: 
+            MAX_ANGLE = 30
+            angle = randint(-MAX_ANGLE, MAX_ANGLE)
+
+            img_rotated = Image.fromarray(img).rotate(angle)
+            img = np.array(img_rotated)
+
+            label_rotated = Image.fromarray(label).rotate(angle)
+            label = np.array(label_rotated)
+
+        return img, label
 
 
 # --- PYTESTS --- #
@@ -68,7 +80,9 @@ def run_batch(flip):
     datasets = {
         'cell': (3, 256, 256),
         'mall': (3, 480, 640),
-        'ucsd': (1, 160, 240)
+        'ucsd': (1, 160, 240),
+        "ticket": (3, 256, 256),
+        "blueberry": (3, 256, 256),
     }
 
     # for each dataset check both training and validation HDF5
