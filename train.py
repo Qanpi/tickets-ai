@@ -47,7 +47,7 @@ from models import UNet, FCRN_A
 )
 @click.option(
     "-rt",
-    "--rotation_chance"
+    "--rotation_chance",
     default=0.0,
     help="The chance of a 2D rotation for the training dataset."
 )
