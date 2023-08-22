@@ -15,7 +15,7 @@ class Looper():
                  optimizer: torch.optim.Optimizer,
                  data_loader: torch.utils.data.DataLoader,
                  dataset_size: int,
-                 validation: bool=False,
+                 validation: bool=False,    
                  ):
         """
         Initialize self.
