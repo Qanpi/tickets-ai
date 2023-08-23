@@ -3,6 +3,7 @@ from typing import Optional, List
 
 import torch
 import numpy as np
+from PIL import Image
 import os
 from scipy.ndimage import gaussian_filter, maximum_filter
 from skimage.feature import peak_local_max
@@ -95,7 +96,8 @@ class Looper:
 
                 true_counts = np.sum(true_gauss) / 100
                 predicted_counts = np.sum(predicted) / 100
-                print("counts", true_counts, predicted_counts)
+
+                # print("counts", true_counts, predicted_counts)
 
                 # update current epoch results
                 self.true_values.append(true_counts)
@@ -114,6 +116,9 @@ class Looper:
 
         self.precisions.append(precision)
         self.recalls.append(recall)
+
+        self.mean_precision = sum(self.precisions) / self.size
+        self.mean_recall = sum(self.recalls) / self.size
 
     def update_errors(self):
         """
@@ -141,28 +146,37 @@ class Looper:
             f"\tMean error: {self.mean_err:3.3f}\n"
             f"\tMean absolute error: {self.mean_abs_err:3.3f}\n"
             f"\tError deviation: {self.std:3.3f}\n"
+            f"\tMean precision: {self.mean_precision}\n"
+            f"\tMean recall: {self.mean_recall}\n"
         )
 
 def find_precision_recall(true, predicted):
-    n = int(np.sum(true) / 100)
+    n = np.sum(predicted) // 100
 
     peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
-
-    dmap = np.empty(predicted.shape)
-
     x = peaks[:, 0]
     y = peaks[:, 1]
-    dmap[y, x] = 1
+
+    dmap = np.full(predicted.shape, 0)
+    dmap[x, y] = 1
+
+    EXPANSION = 3 
+    true_exp = maximum_filter(true, size=(EXPANSION,)*2)
+    dmap_exp = maximum_filter(dmap, size=(EXPANSION,)*2)
 
     #find true positives, false positives and false negatives
-    TP = np.count_nonzero(np.logical_and(true, dmap))
-    FP = np.count_nonzero(np.logical_and(true == 0, dmap))
-    FN = np.count_nonzero(np.logical_and(true, dmap == 0))
+    TP = np.count_nonzero(np.logical_and(true, dmap_exp)) 
+    FP = np.count_nonzero(np.logical_and(true_exp == 0, dmap)) 
+    FN = np.count_nonzero(np.logical_and(true, dmap_exp == 0)) 
 
     print(f"TP: {TP}, FP: {FP}, FN: {FN}")
 
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
+    try:
+      precision = TP / (TP + FP)
+      recall = TP / (TP + FN)
+
+    except ZeroDivisionError: 
+      return 0, 0
 
     return precision, recall 
 
@@ -176,3 +190,6 @@ def test_precision_recall():
 
     assert precision == TP / (TP + FP)
     assert recall == TP / (TP + FN)
+
+#1st, 11th, 18th
+#find time to present article yourself

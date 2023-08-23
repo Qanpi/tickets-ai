@@ -131,13 +131,16 @@ def infer(
     if visualize:
         _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, keypoints, save)
 
-def _visualize(img, dmap, n_objects, keypoints=None, save=False):
+def _visualize(img, dmap, n_objects, keypoints=None, save=None):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
     fig, axes = plt.subplots(1, 2)
 
     # turn off axis ticks
     [ax.axis("off") for ax in axes]
+
+    print(np.mean(dmap))
+    np.save("dmap.npy", dmap)
 
     # display raw density map
     axes[0].imshow(dmap, cmap="hot")
