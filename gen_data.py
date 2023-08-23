@@ -18,7 +18,6 @@ import wget
 import numpy as np
 from PIL import Image
 from scipy.io import loadmat
-from scipy.ndimage import gaussian_filter
 
 
 @click.command()
@@ -104,9 +103,6 @@ def generate_label(label_info: np.array, image_shape: List[int]):
     for x, y, *_ in label_info:
         if y < image_shape[0] and x < image_shape[1]:
             label[int(y)][int(x)] = 100
-
-    # apply a convolution with a Gaussian kernel
-    label = gaussian_filter(label, sigma=(1, 1), order=0)
 
     return label
 
@@ -293,9 +289,6 @@ def generate_blueberry_data(path):
             #append the count 
             data.append(np.count_nonzero(label))
 
-            # generate a density map by applying a Gaussian filter
-            label = gaussian_filter(label, sigma=(1, 1), order=0)
-
             # save data to HDF5 file
             h5['images'][i] = image
             h5['labels'][i, 0] = label
@@ -368,9 +361,6 @@ def generate_cell_data(path):
             #append the count 
             data.append(np.count_nonzero(label))
 
-            # generate a density map by applying a Gaussian filter
-            label = gaussian_filter(label, sigma=(1, 1), order=0)
-
             # save data to HDF5 file
             h5['images'][i] = image
             h5['labels'][i, 0] = label
@@ -417,8 +407,6 @@ def generate_ticket_data(path):
 
                 key = np.array(Image.open(key_path))
                 key = 100.0 * key
-
-                key = gaussian_filter(key, sigma=(1,1), order=0) #generate smoother density map
 
                 h5['images'][i] = image
                 h5['labels'][i, 0] = key
