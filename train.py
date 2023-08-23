@@ -139,10 +139,10 @@ def train(
         os.makedirs(save, exist_ok=True)
 
         id = 1
-        while os.path.exists(path := os.path.join(save, f"log{id}.txt")):
+        while os.path.exists(log_path := os.path.join(save, f"log{id}.txt")):
             id += 1
         
-        log_file = open(path, "a")
+        log_file = open(log_path, "a")
 
     # current best results (lowest mean absolute error on validation set)
     current_best = np.infty
@@ -187,24 +187,30 @@ def _log(text: str, log_file=None, verbose=False):
     
 
 def _plot(looper: Looper, path):
-    fig, plots = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
     """Plot true vs predicted counts and loss."""
     # true vs predicted counts
     true_line = [[0, max(looper.true_values)]] * 2  # y = x
-    plots[0].cla()
-    plots[0].set_title('Train' if not looper.validation else 'Valid')
-    plots[0].set_xlabel('True value')
-    plots[0].set_ylabel('Predicted value')
-    plots[0].plot(*true_line, 'r-')
-    plots[0].scatter(looper.true_values, looper.predicted_values)
+    ax[0].cla()
+    ax[0].set_title('Train' if not looper.validation else 'Valid')
+    ax[0].set_xlabel('True value')
+    ax[0].set_ylabel('Predicted value')
+    ax[0].plot(*true_line, 'r-')
+    ax[0].scatter(looper.true_values, looper.predicted_values)
 
     # loss
     epochs = np.arange(1, len(looper.running_loss) + 1)
-    plots[1].cla()
-    plots[1].set_title('Train' if not looper.validation else 'Valid')
-    plots[1].set_xlabel('Epoch')
-    plots[1].set_ylabel('Loss')
-    plots[1].plot(epochs, looper.running_loss)
+    ax[1].cla()
+    ax[1].set_title('Train' if not looper.validation else 'Valid')
+    ax[1].set_xlabel('Epoch')
+    ax[1].set_ylabel('Loss')
+    ax[1].plot(epochs, looper.running_loss)
+
+    #precision and recall
+    twin_ax = ax[1].twinx()
+    twin_ax.set_ylabel("Precision & Recall")
+    twin_ax.plot(epochs, looper.precision_values)
+    twin_ax.plot(epochs, looper.recall_values)
 
     prefix = "train" if not looper.validation else "valid"
 
