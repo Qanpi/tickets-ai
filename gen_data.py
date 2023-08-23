@@ -1,423 +1,178 @@
-"""A tool to download and preprocess data, and generate HDF5 file.
+"""self implementation."""
+from typing import Optional, List
 
-Available datasets:
-
-    * cell: http://www.robots.ox.ac.uk/~vgg/research/counting/index_org.html
-    * mall: http://personal.ie.cuhk.edu.hk/~ccloy/downloads_mall_dataset.html
-    * ucsd: http://www.svcl.ucsd.edu/projects/peoplecnt/
-"""
-import os
-import shutil
-import zipfile
-from glob import glob
-from typing import List, Tuple
-
-import click
-import h5py
-import wget
+import torch
 import numpy as np
-from PIL import Image
-from scipy.io import loadmat
+import os
+from scipy.ndimage import gaussian_filter, maximum_filter
+from skimage.feature import peak_local_max
 
+class Looper:
+    """self handles epoch loops, logging, and plotting."""
 
-@click.command()
-@click.option("-d", '--dataset',
-              type=click.Choice(['cell', 'mall', 'ucsd', "ticket", "blueberry"]),
-              required=True)
-@click.option('-p', "--path", type=click.Path(exists=False), required=True, help="Path to a directory called 'data' which will contain the image files.")
-def get_data(dataset: str, path: str):
-    """
-    Get chosen dataset and generate HDF5 files with training
-    and validation samples.
-    """
-    path = path or dataset 
-
-    # dictionary-based switch statement
-    data = {
-        'cell': generate_cell_data,
-        'mall': generate_mall_data,
-        'ucsd': generate_ucsd_data,
-        'ticket': generate_ticket_data,
-        "blueberry": generate_blueberry_data
-    }[dataset](path)
-
-    print(f"Successfully loaded dataset {dataset} to {path}.")
-    print(f"Mean: {np.mean(data)}")
-    print(f"Standard deviation: {np.std(data)}")
-
-
-def create_hdf5(dataset_name: str,
-                train_size: int,
-                valid_size: int,
-                img_size: Tuple[int, int],
-                in_channels: int=3):
-    """
-    Create empty training and validation HDF5 files with placeholders
-    for images and labels (density maps).
-
-    Note:
-    Datasets are saved in [dataset_name]/train.h5 and [dataset_name]/valid.h5.
-    Existing files will be overwritten.
-
-    Args:
-        dataset_name: used to create a folder for train.h5 and valid.h5
-        train_size: no. of training samples
-        valid_size: no. of validation samples
-        img_size: (width, height) of a single image / density map
-        in_channels: no. of channels of an input image
-
-    Returns:
-        A tuple of pointers to training and validation HDF5 files.
-    """
-    # create output folder if it does not exist
-    os.makedirs(dataset_name, exist_ok=True)
-
-    # create HDF5 files: [dataset_name]/(train | valid).h5
-    train_h5 = h5py.File(os.path.join(dataset_name, 'train.h5'), 'w')
-    valid_h5 = h5py.File(os.path.join(dataset_name, 'valid.h5'), 'w')
-
-    # add two HDF5 datasets (images and labels) for each HDF5 file
-    for h5, size in ((train_h5, train_size), (valid_h5, valid_size)):
-        h5.create_dataset('images', (size, in_channels, *img_size))
-        h5.create_dataset('labels', (size, 1, *img_size))
-
-    return train_h5, valid_h5
-
-
-def generate_label(label_info: np.array, image_shape: List[int]):
-    """
-    Generate a density map based on objects positions.
-
-    Args:
-        label_info: (x, y) objects positions
-        image_shape: (width, height) of a density map to be generated
-
-    Returns:
-        A density map.
-    """
-    # create an empty density map
-    label = np.zeros(image_shape, dtype=np.float32)
-
-    # loop over objects positions and marked them with 100 on a label
-    # note: *_ because some datasets contain more info except x, y coordinates
-    for x, y, *_ in label_info:
-        if y < image_shape[0] and x < image_shape[1]:
-            label[int(y)][int(x)] = 100
-
-    return label
-
-
-def get_and_unzip(url: str, location: str="."):
-    """Extract a ZIP archive from given URL.
-
-    Args:
-        url: url of a ZIP file
-        location: target location to extract archive in
-    """
-    dataset = wget.download(url)
-    dataset = zipfile.ZipFile(dataset)
-    dataset.extractall(location)
-    dataset.close()
-    os.remove(dataset.filename)
-    
-
-def generate_ucsd_data():
-    """Generate HDF5 files for mall dataset."""
-    # download and extract data
-    get_and_unzip(
-        'http://www.svcl.ucsd.edu/projects/peoplecnt/db/ucsdpeds.zip'
-    )
-    # download and extract annotations
-    get_and_unzip(
-        'http://www.svcl.ucsd.edu/projects/peoplecnt/db/vidf-cvpr.zip'
-    )
-    # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5('ucsd',
-                                     train_size=1500,
-                                     valid_size=500,
-                                     img_size=(160, 240),
-                                     in_channels=1)
-
-    def fill_h5(h5, labels, video_id, init_frame=0, h5_id=0):
+    def __init__(
+        self,
+        network: torch.nn.Module,
+        device: torch.device,
+        loss: torch.nn.Module,
+        optimizer: torch.optim.Optimizer,
+        data_loader: torch.utils.data.DataLoader,
+        dataset_size: int,
+        validation: bool = False,
+    ):
         """
-        Save images and labels in given HDF5 file.
+        Initialize self.
 
         Args:
-            h5: HDF5 file
-            labels: the list of labels
-            video_id: the id of a scene
-            init_frame: the first frame in given list of labels
-            h5_id: next dataset id to be used
+            network: already initialized model
+            device: a device model is working on
+            loss: the cost function
+            optimizer: already initialized optimizer link to network parameters
+            data_loader: already initialized data loader
+            dataset_size: no. of samples in dataset
+            plot: matplotlib axes
+            validation: flag to set train or eval mode
+
         """
-        video_name = f"vidf1_33_00{video_id}"
-        video_path = f"ucsdpeds/vidf/{video_name}.y/"
+        self.network = network
+        self.device = device
+        self.loss = loss
+        self.optimizer = optimizer
+        self.loader = data_loader
+        self.size = dataset_size
+        self.validation = validation
+        self.running_loss = []
 
-        for i, label in enumerate(labels, init_frame):
-            # path to the next frame (convention: [video name]_fXXX.jpg)
-            img_path = f"{video_path}/{video_name}_f{str(i+1).zfill(3)}.png"
+    def run(self):
+        """Run a single epoch loop.
 
-            # get an image as numpy array
-            image = np.array(Image.open(img_path), dtype=np.float32) / 255
-            # generate a density map by applying a Gaussian filter
-            label = generate_label(label[0][0][0], image.shape)
-
-            # pad images to allow down and upsampling
-            image = np.pad(image, 1, 'constant', constant_values=0)
-            label = np.pad(label, 1, 'constant', constant_values=0)
-
-            # save data to HDF5 file
-            h5['images'][h5_id + i - init_frame, 0] = image
-            h5['labels'][h5_id + i - init_frame, 0] = label
-
-    # dataset contains 10 scenes
-    for scene in range(10):
-        # load labels infomation from provided MATLAB file
-        # it is numpy array with (x, y) objects position for subsequent frames
-        descriptions = loadmat(f'vidf-cvpr/vidf1_33_00{scene}_frame_full.mat')
-        labels = descriptions['frame'][0]
-
-        # use first 150 frames for training and the last 50 for validation
-        # start filling from the place last scene finished
-        fill_h5(train_h5, labels[:150], scene, 0, 150 * scene)
-        fill_h5(valid_h5, labels[150:], scene, 150, 50 * scene)
-
-    # close HDF5 files
-    train_h5.close()
-    valid_h5.close()
-
-    # cleanup
-    shutil.rmtree('ucsdpeds')
-    shutil.rmtree('vidf-cvpr')
-
-
-def generate_mall_data():
-    """Generate HDF5 files for mall dataset."""
-    # download and extract dataset
-    get_and_unzip(
-        'http://personal.ie.cuhk.edu.hk/~ccloy/files/datasets/mall_dataset.zip'
-    )
-    # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5('mall',
-                                     train_size=1500,
-                                     valid_size=500,
-                                     img_size=(480, 640),
-                                     in_channels=3)
-
-    # load labels infomation from provided MATLAB file
-    # it is a numpy array with (x, y) objects position for subsequent frames
-    labels = loadmat('mall_dataset/mall_gt.mat')['frame'][0]
-
-    def fill_h5(h5, labels, init_frame=0):
+        Returns:
+            Mean absolute error.
         """
-        Save images and labels in given HDF5 file.
+        # reset current results and add next entry for running loss
+        self.true_values = []
+        self.predicted_values = []
 
-        Args:
-            h5: HDF5 file
-            labels: the list of labels
-            init_frame: the first frame in given list of labels
+        self.precisions = []
+        self.recalls = []
+
+        self.running_loss.append(0)
+
+        # set a proper mode: train or eval
+        self.network.train(not self.validation)
+
+        for image, label in self.loader:
+            # move images and labels to given device
+            image = image.to(self.device)
+            label = label.to(self.device)
+
+            # clear accumulated gradient if in train mode
+            if not self.validation:
+                self.optimizer.zero_grad()
+
+            # get model prediction (a density map)
+            result = self.network(image)
+
+            # calculate loss and update running loss
+            loss = self.loss(result, label)
+            self.running_loss[-1] += image.shape[0] * loss.item() / self.size
+
+            # update weights if in train mode
+            if not self.validation:
+                loss.backward()
+                self.optimizer.step()
+
+            # loop over batch samples
+            for true, predicted in zip(label, result):
+                # integrate a density map to get no. of objects
+                # note: density maps were normalized to 100 * no. of objects
+                #       to make network learn better
+                true = true.detach().cpu().numpy().squeeze()
+                predicted = predicted.detach().cpu().numpy().squeeze()
+
+                # generate a density map by applying a Gaussian filter
+                true_gauss = gaussian_filter(true, sigma=(1, 1), order=0)
+
+                true_counts = np.sum(true_gauss) / 100
+                predicted_counts = np.sum(predicted) / 100
+                print("counts", true_counts, predicted_counts)
+
+                # update current epoch results
+                self.true_values.append(true_counts)
+                self.predicted_values.append(predicted_counts)
+
+                # localization error and precision
+                self.update_precision(true, predicted)
+
+        # calculate errors and standard deviation
+        self.update_errors()
+
+        return self.mean_abs_err
+
+    def update_precision(self, true, predicted):
+        precision, recall = find_precision_recall(true, predicted)
+
+        self.precisions.append(precision)
+        self.recalls.append(recall)
+
+    def update_errors(self):
         """
-        for i, label in enumerate(labels, init_frame):
-            # path to the next frame (filename convention: seq_XXXXXX.jpg)
-            img_path = f"mall_dataset/frames/seq_{str(i+1).zfill(6)}.jpg"
-
-            # get an image as numpy array
-            image = np.array(Image.open(img_path), dtype=np.float32) / 255
-            image = np.transpose(image, (2, 0, 1))
-
-            # generate a density map by applying a Gaussian filter
-            label = generate_label(label[0][0][0], image.shape[1:])
-
-            # save data to HDF5 file
-            h5['images'][i - init_frame] = image
-            h5['labels'][i - init_frame, 0] = label
-
-    # use first 1500 frames for training and the last 500 for validation
-    fill_h5(train_h5, labels[:1500])
-    fill_h5(valid_h5, labels[1500:], 1500)
-
-    # close HDF5 file
-    train_h5.close()
-    valid_h5.close()
-
-    # cleanup
-    shutil.rmtree('mall_dataset')
-
-def generate_blueberry_data(path): 
-    image_path = os.path.join(path, "img")
-    image_list = glob(os.path.join(image_path, '*blueberry.png'))
-
-    if len(image_list) == 0:
-        raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
-    
-    dataset_size = len(image_list)
-    train_percent = 0.8
-    split = int(train_percent * dataset_size)
-
-    data = []
-
-    # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5(path,
-                                     train_size=split,
-                                     valid_size=dataset_size-split,
-                                     img_size=(256, 256),
-                                     in_channels=3)
-    
-    def fill_h5(h5, images):
+        Calculate errors and standard deviation based on current
+        true and predicted values.
         """
-        Save images and labels in given HDF5 file.
+        self.err = [
+            true - predicted
+            for true, predicted in zip(self.true_values, self.predicted_values)
+        ]
+        self.abs_err = [abs(error) for error in self.err]
+        self.mean_err = sum(self.err) / self.size
+        self.mean_abs_err = sum(self.abs_err) / self.size
+        self.std = np.array(self.err).std()
 
-        Args:
-            h5: HDF5 file
-            images: the list of images paths
-        """
-        for i, img_path in enumerate(images):
-            # get label path
-            label_path = img_path.replace('blueberry.', 'dots.')
-            # get an image as numpy array
-            image = np.array(Image.open(img_path), dtype=np.float32) / 255
-            image = np.transpose(image, (2, 0, 1))
+        # self.precision = [predicted / true for true, predicted in zip(self.true_values, self.predicted_values)]
+        # self.mean_precision = sum(self.avg_precision) / self.size
 
-            # convert a label image into a density map: dataset provides labels
-            # in the form on an image with red dots placed in objects position
+        # self.recall = [predicted / true for true, predicted in zip(self.true_values, self.predicted_values)]
 
-            # load an RGB image
-            label = np.array(Image.open(label_path))
-
-            # make a one-channel label array with 100 in dots positions
-            label = 100.0 * label
-
-            #append the count 
-            data.append(np.count_nonzero(label))
-
-            # save data to HDF5 file
-            h5['images'][i] = image
-            h5['labels'][i, 0] = label
-
-    # use first 150 samples for training and the last 50 for validation
-    fill_h5(train_h5, image_list[:split])
-    fill_h5(valid_h5, image_list[split:])
-
-    # close HDF5 files
-    train_h5.close()
-    valid_h5.close()
-
-    return np.array(data)
-
-
-def generate_cell_data(path):
-    """Generate HDF5 files for fluorescent cell dataset."""
-    # get the list of all samples
-    # dataset name convention: XXXcell.png (image) XXXdots.png (label)
-    image_path = os.path.join(path, "img")
-    image_list = glob(os.path.join(image_path, '*cell*.*'))
-
-    # download and extract dataset
-    if len(image_list) == 0:
-        get_and_unzip(
-            'http://www.robots.ox.ac.uk/~vgg/research/counting/cells.zip',
-            location=image_path
+    def get_results(self):
+        return (
+            f"{'Train' if not self.validation else 'Valid'}:\n"
+            f"\tAverage loss: {self.running_loss[-1]:3.4f}\n"
+            f"\tMean error: {self.mean_err:3.3f}\n"
+            f"\tMean absolute error: {self.mean_abs_err:3.3f}\n"
+            f"\tError deviation: {self.std:3.3f}\n"
         )
-    
-    image_list.sort()
 
-    dataset_size = len(image_list)
-    train_percent = 0.8
-    split = int(train_percent * dataset_size)
+def find_precision_recall(true, predicted):
+    n = int(np.sum(true) / 100)
 
-    data = []
+    peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
 
-    # create training and validation HDF5 files
-    train_h5, valid_h5 = create_hdf5(path,
-                                     train_size=split,
-                                     valid_size=dataset_size-split,
-                                     img_size=(256, 256),
-                                     in_channels=3)
+    dmap = np.empty(predicted.shape)
 
-    def fill_h5(h5, images):
-        """
-        Save images and labels in given HDF5 file.
+    x = peaks[:, 0]
+    y = peaks[:, 1]
+    dmap[y, x] = 1
 
-        Args:
-            h5: HDF5 file
-            images: the list of images paths
-        """
-        for i, img_path in enumerate(images):
-            # get label path
-            label_path = img_path.replace('cell.', 'dots.')
-            # get an image as numpy array
-            image = np.array(Image.open(img_path), dtype=np.float32) / 255
-            image = np.transpose(image, (2, 0, 1))
+    #find true positives, false positives and false negatives
+    TP = np.count_nonzero(np.logical_and(true, dmap))
+    FP = np.count_nonzero(np.logical_and(true == 0, dmap))
+    FN = np.count_nonzero(np.logical_and(true, dmap == 0))
 
-            # convert a label image into a density map: dataset provides labels
-            # in the form on an image with red dots placed in objects position
+    print(f"TP: {TP}, FP: {FP}, FN: {FN}")
 
-            # load an RGB image
-            label = np.array(Image.open(label_path))
+    precision = TP / (TP + FP)
+    recall = TP / (TP + FN)
 
-            # make a one-channel label array with 100 in red dots positions
-            label = (label[:, :, 0] > 0) if label.ndim == 3 else label
-            label = 100.0 * label
+    return precision, recall 
 
-            #append the count 
-            data.append(np.count_nonzero(label))
 
-            # save data to HDF5 file
-            h5['images'][i] = image
-            h5['labels'][i, 0] = label
+def test_precision_recall():
+    TP = FP = FN = 2
+    true = np.array([[0, 1, 0], [1, 1, 0], [1, 0, 0]])
+    predicted = np.array([[1, 0, 0], [0, 1, 0], [1, 1, 0]])
 
-    # use first 150 samples for training and the last 50 for validation
-    fill_h5(train_h5, image_list[:split])
-    fill_h5(valid_h5, image_list[split:])
+    precision, recall = find_precision_recall(true, predicted)
 
-    # close HDF5 files
-    train_h5.close()
-    valid_h5.close()
-
-    return np.array(data)
-    # cleanup
-    # shutil.rmtree('cell')
-
-def generate_ticket_data(path):
-    image_path = os.path.join(path, "img")
-    image_list = glob(os.path.join(image_path, "*ticket*.*"))
-
-    # download and extract dataset
-    if len(image_list) == 0:
-        raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
-    
-    image_list.sort()
-
-    dataset_size = len(image_list)
-    train_percent = 0.8
-    split = int(train_percent * dataset_size)
-
-    try:
-        train_h5, valid_h5 = create_hdf5(path,
-                                        train_size=split,
-                                        valid_size=dataset_size - split,
-                                        img_size=(256, 256),
-                                        in_channels=3)
-
-        def fill_h5(h5, images):
-            for i, img_path in enumerate(images):
-                key_path = img_path.replace("ticket.", "dots.")
-
-                image = np.array(Image.open(img_path).convert("RGB"), dtype=np.float32) / 255
-                image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
-
-                key = np.array(Image.open(key_path))
-                key = 100.0 * key
-
-                h5['images'][i] = image
-                h5['labels'][i, 0] = key
-
-        fill_h5(train_h5, image_list[:split])
-        fill_h5(valid_h5, image_list[split:])
-
-    finally: #cleanup
-        train_h5.close()
-        valid_h5.close()
-        # shutil.rmtree("ticket")
-
-if __name__ == '__main__':
-    get_data()
+    assert precision == TP / (TP + FP)
+    assert recall == TP / (TP + FN)
