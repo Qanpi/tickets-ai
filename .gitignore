@@ -4,4 +4,12 @@ __pycache__/
 *.h5
 .tmp.*
 .venv/
+
+#datasets
 data/
+cell/
+ticket/
+blueberry/s
+
+#jupyter
+.ipynb_checkpoints/
