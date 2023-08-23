@@ -213,8 +213,8 @@ def _plot(looper: Looper, path):
     #precision and recall
     twin_ax = ax[1].twinx()
     twin_ax.set_ylabel("Precision & Recall (%)")
-    twin_ax.plot(epochs, looper.precision_values, label="Precision")
-    twin_ax.plot(epochs, looper.recall_values, label="Recall")
+    twin_ax.plot(epochs, looper.mean_precisions, label="Precision")
+    twin_ax.plot(epochs, looper.mean_recalls, label="Recall")
     twin_ax.legend()
 
     prefix = "train" if not looper.validation else "valid"
@@ -226,7 +226,7 @@ def _plot(looper: Looper, path):
         id += 1
         save_path = os.path.join(path, f"{prefix}{id}.png")
 
-    fig.savefig(os.path.join(save_path, f"{prefix}.png")) 
+    fig.savefig(save_path) 
 
 if __name__ == "__main__":
     train()

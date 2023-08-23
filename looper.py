@@ -140,11 +140,6 @@ class Looper:
         self.mean_abs_err = sum(self.abs_err) / self.size
         self.std = np.array(self.err).std()
 
-        # self.precision = [predicted / true for true, predicted in zip(self.true_values, self.predicted_values)]
-        # self.mean_precision = sum(self.avg_precision) / self.size
-
-        # self.recall = [predicted / true for true, predicted in zip(self.true_values, self.predicted_values)]
-
     def get_results(self):
         return (
             f"{'Train' if not self.validation else 'Valid'}:\n"
