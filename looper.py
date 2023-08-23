@@ -7,7 +7,6 @@ import os
 from scipy.ndimage import gaussian_filter, maximum_filter
 from skimage.feature import peak_local_max
 
-
 class Looper:
     """self handles epoch loops, logging, and plotting."""
 
@@ -88,19 +87,22 @@ class Looper:
                 # integrate a density map to get no. of objects
                 # note: density maps were normalized to 100 * no. of objects
                 #       to make network learn better
-
-                # localization error and precision
-                self.update_precision(true, predicted)
+                true = true.detach().cpu().numpy().squeeze()
+                predicted = predicted.detach().cpu().numpy().squeeze()
 
                 # generate a density map by applying a Gaussian filter
-                predicted = gaussian_filter(predicted, sigma=(1, 1), order=0)
+                true_gauss = gaussian_filter(true, sigma=(1, 1), order=0)
 
-                true_counts = torch.sum(true).item() / 100
-                predicted_counts = torch.sum(predicted).item() / 100
+                true_counts = np.sum(true_gauss) / 100
+                predicted_counts = np.sum(predicted) / 100
+                print("counts", true_counts, predicted_counts)
 
                 # update current epoch results
                 self.true_values.append(true_counts)
                 self.predicted_values.append(predicted_counts)
+
+                # localization error and precision
+                self.update_precision(true, predicted)
 
         # calculate errors and standard deviation
         self.update_errors()
@@ -108,9 +110,6 @@ class Looper:
         return self.mean_abs_err
 
     def update_precision(self, true, predicted):
-        true = true.detach().cpu().numpy()
-        predicted = predicted.detach().cpu().numpy()
-
         precision, recall = find_precision_recall(true, predicted)
 
         self.precisions.append(precision)
@@ -144,19 +143,21 @@ class Looper:
             f"\tError deviation: {self.std:3.3f}\n"
         )
 
-
 def find_precision_recall(true, predicted):
-    # make a charitable dmap of detected objects
-    UNCERTAINTY = 3
-    dmap = maximum_filter(predicted, size=(UNCERTAINTY,) * 2)
-    print(dmap)
+    n = int(np.sum(true) / 100)
 
-    THRESHOLD = 10
+    peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
+
+    dmap = np.empty(predicted.shape)
+
+    x = peaks[:, 0]
+    y = peaks[:, 1]
+    dmap[y, x] = 1
 
     #find true positives, false positives and false negatives
-    TP = np.count_nonzero(np.logical_and(true, dmap >= THRESHOLD))
-    FP = np.count_nonzero(np.logical_and(true, dmap < THRESHOLD))
-    FN = np.count_nonzero(np.logical_and(true == 0, dmap >= THRESHOLD))
+    TP = np.count_nonzero(np.logical_and(true, dmap))
+    FP = np.count_nonzero(np.logical_and(true == 0, dmap))
+    FN = np.count_nonzero(np.logical_and(true, dmap == 0))
 
     print(f"TP: {TP}, FP: {FP}, FN: {FN}")
 
