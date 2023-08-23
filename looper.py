@@ -43,6 +43,8 @@ class Looper:
         self.size = dataset_size
         self.validation = validation
         self.running_loss = []
+        self.mean_precisions = []
+        self.mean_recalls = []
 
     def run(self):
         """Run a single epoch loop.
@@ -103,22 +105,26 @@ class Looper:
                 self.true_values.append(true_counts)
                 self.predicted_values.append(predicted_counts)
 
-                # localization error and precision
-                self.update_precision(true, predicted)
+
+                precision, recall = find_precision_recall(true, predicted)
+
+                self.precision_values.append(precision)
+                self.recall_values.append(recall)
+
+        # localization error and precision
+        self.update_precision()
 
         # calculate errors and standard deviation
         self.update_errors()
 
         return self.mean_abs_err
 
-    def update_precision(self, true, predicted):
-        precision, recall = find_precision_recall(true, predicted)
+    def update_precision(self): 
+        mean_precision = sum(self.precision_values) / self.size
+        self.mean_precisions.append(mean_precision)
 
-        self.precision_values.append(precision)
-        self.recall_values.append(recall)
-
-        self.mean_precision = sum(self.precision_values) / self.size
-        self.mean_recall = sum(self.recall_values) / self.size
+        mean_recall = sum(self.recall_values) / self.size
+        self.mean_recalls.append(mean_recalls)
 
     def update_errors(self):
         """
@@ -151,7 +157,7 @@ class Looper:
         )
 
 def find_precision_recall(true, predicted):
-    n = np.sum(predicted) // 100
+    n = int(np.sum(predicted) / 100)
 
     peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
     x = peaks[:, 0]
