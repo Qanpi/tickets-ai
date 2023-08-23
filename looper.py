@@ -152,8 +152,8 @@ class Looper:
             f"\tMean error: {self.mean_err:3.3f}\n"
             f"\tMean absolute error: {self.mean_abs_err:3.3f}\n"
             f"\tError deviation: {self.std:3.3f}\n"
-            f"\tMean precision: {self.mean_precision:3.3f}\n"
-            f"\tMean recall: {self.mean_recall:3.3f}\n"
+            f"\tMean precision: {self.mean_precisions[-1]:3.3f}\n"
+            f"\tMean recall: {self.mean_recalls[-1]:3.3f}\n"
         )
 
 def find_precision_recall(true, predicted):
