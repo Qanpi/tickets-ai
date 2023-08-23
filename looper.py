@@ -151,7 +151,7 @@ class Looper:
         )
 
 def find_precision_recall(true, predicted):
-    n = np.sum(predicted) // 100
+    n = int(np.sum(predicted) / 100)
 
     peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
     x = peaks[:, 0]
