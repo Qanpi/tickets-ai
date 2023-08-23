@@ -190,7 +190,7 @@ def _log(text: str, log_file=None, verbose=False):
     
 
 def _plot(looper: Looper, path):
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
     """Plot true vs predicted counts and loss."""
     # true vs predicted counts
     true_line = [[0, max(looper.true_values)]] * 2  # y = x
@@ -208,14 +208,12 @@ def _plot(looper: Looper, path):
     ax[1].set_xlabel('Epoch')
     ax[1].set_ylabel('Loss')
     ax[1].plot(epochs, looper.running_loss, "r", label="Loss")
-    ax[1].legend()
 
     #precision and recall
-    twin_ax = ax[1].twinx()
-    twin_ax.set_ylabel("Precision & Recall (%)")
-    twin_ax.plot(epochs, looper.mean_precisions, "b", label="Precision")
-    twin_ax.plot(epochs, looper.mean_recalls, "g", label="Recall")
-    twin_ax.legend()
+    ax[2].set_ylabel("Precision & Recall (%)")
+    ax[2].plot(epochs, looper.mean_precisions, "b", label="Precision")
+    ax[2].plot(epochs, looper.mean_recalls, "g", label="Recall")
+    ax[2].legend()
 
     prefix = "train" if not looper.validation else "valid"
 
