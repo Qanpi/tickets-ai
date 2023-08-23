@@ -54,8 +54,8 @@ class Looper:
         self.true_values = []
         self.predicted_values = []
 
-        self.precisions = []
-        self.recalls = []
+        self.precision_values = []
+        self.recall_values = []
 
         self.running_loss.append(0)
 
@@ -114,11 +114,11 @@ class Looper:
     def update_precision(self, true, predicted):
         precision, recall = find_precision_recall(true, predicted)
 
-        self.precisions.append(precision)
-        self.recalls.append(recall)
+        self.precision_values.append(precision)
+        self.recall_values.append(recall)
 
-        self.mean_precision = sum(self.precisions) / self.size
-        self.mean_recall = sum(self.recalls) / self.size
+        self.mean_precision = sum(self.precision_values) / self.size
+        self.mean_recall = sum(self.recall_values) / self.size
 
     def update_errors(self):
         """
@@ -168,8 +168,6 @@ def find_precision_recall(true, predicted):
     TP = np.count_nonzero(np.logical_and(true, dmap_exp)) 
     FP = np.count_nonzero(np.logical_and(true_exp == 0, dmap)) 
     FN = np.count_nonzero(np.logical_and(true, dmap_exp == 0)) 
-
-    print(f"TP: {TP}, FP: {FP}, FN: {FN}")
 
     try:
       precision = TP / (TP + FP)
