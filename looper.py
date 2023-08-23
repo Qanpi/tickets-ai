@@ -124,7 +124,7 @@ class Looper:
         self.mean_precisions.append(mean_precision)
 
         mean_recall = sum(self.recall_values) / self.size
-        self.mean_recalls.append(mean_recalls)
+        self.mean_recalls.append(mean_recall)
 
     def update_errors(self):
         """
@@ -152,8 +152,8 @@ class Looper:
             f"\tMean error: {self.mean_err:3.3f}\n"
             f"\tMean absolute error: {self.mean_abs_err:3.3f}\n"
             f"\tError deviation: {self.std:3.3f}\n"
-            f"\tMean precision: {self.mean_precision}\n"
-            f"\tMean recall: {self.mean_recall}\n"
+            f"\tMean precision: {self.mean_precision:3.3f}\n"
+            f"\tMean recall: {self.mean_recall:3.3f}\n"
         )
 
 def find_precision_recall(true, predicted):

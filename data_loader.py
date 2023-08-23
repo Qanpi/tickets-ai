@@ -55,11 +55,10 @@ class H5Dataset(Dataset):
             label = np.flip(label, axis=2).copy()
 
         if random() < self.rotation_chance: 
-            MAX_ANGLE = 30
-            angle = randint(-MAX_ANGLE, MAX_ANGLE)
+            rot = randint(1, 3)
 
-            img = ndimage.rotate(img, angle, reshape=False)
-            label = ndimage.rotate(label, angle, reshape=False)
+            img = np.rot90(img, k=rot, axes=(1,2)).copy()
+            label = np.rot90(label, k=rot, axes=(1,2)).copy()
   
         return img, label
 
