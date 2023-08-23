@@ -161,7 +161,7 @@ def find_precision_recall(true, predicted):
     dmap = np.full(predicted.shape, 0)
     dmap[x, y] = 1
 
-    EXPANSION = 3 
+    EXPANSION = 5 
     true_exp = maximum_filter(true, size=(EXPANSION,)*2)
     dmap_exp = maximum_filter(dmap, size=(EXPANSION,)*2)
 
