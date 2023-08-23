@@ -139,8 +139,11 @@ def train(
         os.makedirs(save, exist_ok=True)
 
         id = 1
-        while os.path.exists(log_path := os.path.join(save, f"log{id}.txt")):
+        log_path = os.path.join(save, f"log{id}.txt")
+        while os.path.exists(log_path):
             id += 1
+            log_path = os.path.join(save, f"log{id}.txt")
+
         
         log_file = open(log_path, "a")
 
@@ -215,8 +218,11 @@ def _plot(looper: Looper, path):
     prefix = "train" if not looper.validation else "valid"
 
     id = 1
-    while os.path.exists(save_path := os.path.join(path, f"{prefix}{id}.png")):
+    save_path = os.path.join(path, f"{prefix}{id}.png")
+
+    while os.path.exists(save_path):
         id += 1
+        save_path = os.path.join(path, f"{prefix}{id}.png")
 
     fig.savefig(os.path.join(save_path, f"{prefix}.png")) 
 
