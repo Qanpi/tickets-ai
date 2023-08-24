@@ -167,6 +167,10 @@ def train(
         # update checkpoint if new best is reached
         if result < current_best:
             current_best = result
+
+            train_looper.update_best_values()
+            valid_looper.update_best_values()
+
             torch.save(
                 network.state_dict(),
                 os.path.join(data_path, f"{network_architecture}.pth"),
@@ -193,13 +197,13 @@ def _plot(looper: Looper, path):
     fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
     """Plot true vs predicted counts and loss."""
     # true vs predicted counts
-    true_line = [[0, max(looper.true_values)]] * 2  # y = x
+    true_line = [[0, max(looper.best_true_values)]] * 2  # y = x
     ax[0].cla()
     ax[0].set_title('Train' if not looper.validation else 'Valid')
     ax[0].set_xlabel('True value')
     ax[0].set_ylabel('Predicted value')
     ax[0].plot(*true_line, 'r-')
-    ax[0].scatter(looper.true_values, looper.predicted_values)
+    ax[0].scatter(looper.best_true_values, looper.best_predicted_values)
 
     # loss
     epochs = np.arange(1, len(looper.running_loss) + 1)
