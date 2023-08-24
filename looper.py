@@ -128,8 +128,8 @@ class Looper:
         self.best_true_values = self.true_values.copy()
         self.best_predicted_values = self.predicted_values.copy()
 
-        self.best_recall = self.recall_values[-1]
-        self.best_precision = self.precision_values[-1]
+        self.best_recall = self.mean_precisions[-1]
+        self.best_precision = self.mean_recalls[-1]
 
     def update_precision(self): 
         mean_precision = sum(self.precision_values) / self.size
