@@ -45,6 +45,8 @@ class Looper:
         self.running_loss = []
         self.mean_precisions = []
         self.mean_recalls = []
+        self.best_true_values = []
+        self.best_predicted_values = []
 
     def run(self):
         """Run a single epoch loop.
@@ -55,9 +57,6 @@ class Looper:
         # reset current results and add next entry for running loss
         self.true_values = []
         self.predicted_values = []
-
-        self.best_true_values = []
-        self.best_predicted_values = []
 
         self.precision_values = []
         self.recall_values = []
@@ -108,7 +107,6 @@ class Looper:
                 self.true_values.append(true_counts)
                 self.predicted_values.append(predicted_counts)
 
-
                 precision, recall = find_precision_recall(true, predicted)
 
                 self.precision_values.append(precision)
@@ -124,12 +122,12 @@ class Looper:
 
     def update_best_values(self): 
         self.best_mae = self.mean_abs_err
-
-        self.best_true_values = self.true_values.copy()
-        self.best_predicted_values = self.predicted_values.copy()
-
         self.best_recall = self.mean_precisions[-1]
         self.best_precision = self.mean_recalls[-1]
+
+        #used for plotting
+        self.best_true_values = self.true_values.copy()
+        self.best_predicted_values = self.predicted_values.copy()
 
     def update_precision(self): 
         mean_precision = sum(self.precision_values) / self.size
