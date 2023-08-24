@@ -123,8 +123,13 @@ class Looper:
         return self.mean_abs_err
 
     def update_best_values(self): 
+        self.best_mae = self.mean_abs_err
+
         self.best_true_values = self.true_values.copy()
         self.best_predicted_values = self.predicted_values.copy()
+
+        self.best_recall = self.recall_values[-1]
+        self.best_precision = self.precision_values[-1]
 
     def update_precision(self): 
         mean_precision = sum(self.precision_values) / self.size

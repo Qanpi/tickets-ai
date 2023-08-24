@@ -148,7 +148,7 @@ def train(
         log_file = open(log_path, "a")
 
     # current best results (lowest mean absolute error on validation set)
-    current_best = np.infty
+    best_valid_mae = np.infty
 
     for epoch in range(epochs):
         _log(f"Epoch {epoch + 1}", log_file, True) #always print this
@@ -159,14 +159,14 @@ def train(
 
         # run validation epoch
         with torch.no_grad():
-            result = valid_looper.run()
+            best_result = valid_looper.run()
 
         _log(train_looper.get_results(), log_file, verbose)
         _log(valid_looper.get_results(), log_file, verbose)
 
         # update checkpoint if new best is reached
-        if result < current_best:
-            current_best = result
+        if best_result < best_valid_mae:
+            best_valid_mae = best_result
 
             train_looper.update_best_values()
             valid_looper.update_best_values()
@@ -176,7 +176,7 @@ def train(
                 os.path.join(data_path, f"{network_architecture}.pth"),
             )
 
-            _log(f"New best result: {result}", log_file, verbose)
+            _log(f"New best result: {best_result}", log_file, verbose)
 
         _log("-" * 50, log_file, verbose)
 
@@ -184,7 +184,11 @@ def train(
         _plot(train_looper, save)
         _plot(valid_looper, save)
 
-    _log(f"[Training done] Best result: {current_best}", log_file, True)
+    _log(f"[Training done] Best valid MAE: {best_valid_mae}", log_file, True)
+    _log(f"[Training done] Best train MAE: {train_looper.best_mae}", log_file, True)
+
+    _log(f"[Training done] Best valid Precision: {valid_looper.best_precision}", log_file, True)
+    _log(f"[Training done] Best valid Recall: {valid_looper.best_recall}", log_file, True)
 
 def _log(text: str, log_file=None, verbose=False):
     """Print text to file or CLI or both, depending on the options."""
