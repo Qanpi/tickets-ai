@@ -210,7 +210,7 @@ def _plot(looper: Looper, path):
     ax[1].plot(epochs, looper.running_loss, "r", label="Loss")
 
     #precision and recall
-    ax[2].set_ylabel("Precision & Recall (%)")
+    ax[2].set_ylabel("Evaluation metrics (%)")
     ax[2].plot(epochs, looper.mean_precisions, "b", label="Precision")
     ax[2].plot(epochs, looper.mean_recalls, "g", label="Recall")
     ax[2].legend()

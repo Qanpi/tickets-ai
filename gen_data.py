@@ -25,7 +25,9 @@ from scipy.io import loadmat
               type=click.Choice(['cell', 'mall', 'ucsd', "ticket", "blueberry"]),
               required=True)
 @click.option('-p', "--path", type=click.Path(exists=False), required=True, help="Path to a directory called 'data' which will contain the image files.")
-def get_data(dataset: str, path: str):
+@click.option("-tp", "--train_percent", default=0.8, help="The percentage of data to use for training (the rest is used for validation).")
+
+def get_data(dataset: str, path: str, train_percent: float):
     """
     Get chosen dataset and generate HDF5 files with training
     and validation samples.
@@ -39,7 +41,7 @@ def get_data(dataset: str, path: str):
         'ucsd': generate_ucsd_data,
         'ticket': generate_ticket_data,
         "blueberry": generate_blueberry_data
-    }[dataset](path)
+    }[dataset](path, train_percent)
 
     print(f"Successfully loaded dataset {dataset} to {path}.")
     print(f"Mean: {np.mean(data)}")
@@ -304,7 +306,7 @@ def generate_blueberry_data(path):
     return np.array(data)
 
 
-def generate_cell_data(path):
+def generate_cell_data(path, train_percent):
     """Generate HDF5 files for fluorescent cell dataset."""
     # get the list of all samples
     # dataset name convention: XXXcell.png (image) XXXdots.png (label)
@@ -321,7 +323,6 @@ def generate_cell_data(path):
     image_list.sort()
 
     dataset_size = len(image_list)
-    train_percent = 0.8
     split = int(train_percent * dataset_size)
 
     data = []
