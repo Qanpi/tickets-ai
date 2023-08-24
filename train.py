@@ -218,7 +218,7 @@ def _plot(looper: Looper, path):
     ax[1].plot(epochs, looper.running_loss, "r", label="Loss")
 
     #precision and recall
-    ax[2].set_ylabel("Evaluation metrics (%)")
+    ax[2].set_ylabel("Evaluation (%)")
     ax[2].plot(epochs, looper.mean_precisions, "b", label="Precision")
     ax[2].plot(epochs, looper.mean_recalls, "g", label="Recall")
     ax[2].legend()
@@ -232,7 +232,7 @@ def _plot(looper: Looper, path):
         id += 1
         save_path = os.path.join(path, f"{prefix}{id}.png")
 
-    fig.savefig(save_path) 
+    fig.savefig(save_path, bbox_inches='tight') 
 
 if __name__ == "__main__":
     train()
