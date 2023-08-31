@@ -244,7 +244,7 @@ def generate_mall_data():
     # cleanup
     shutil.rmtree('mall_dataset')
 
-def generate_blueberry_data(path): 
+def generate_blueberry_data(path, train_percent): 
     image_path = os.path.join(path, "img")
     image_list = glob(os.path.join(image_path, '*blueberry.png'))
 
@@ -252,7 +252,6 @@ def generate_blueberry_data(path):
         raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
     
     dataset_size = len(image_list)
-    train_percent = 0.8
     split = int(train_percent * dataset_size)
 
     data = []
