@@ -198,26 +198,29 @@ def _log(text: str, log_file=None, verbose=False):
     
 
 def _plot(looper: Looper, path):
-    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(16, 4))
     """Plot true vs predicted counts and loss."""
+    fig.suptitle('Training' if not looper.validation else 'Validation')
+
     # true vs predicted counts
     true_line = [[0, max(looper.best_true_values)]] * 2  # y = x
-    ax[0].cla()
-    ax[0].set_title('Train' if not looper.validation else 'Valid')
-    ax[0].set_xlabel('True value')
-    ax[0].set_ylabel('Predicted value')
+    # ax[0].cla()
+    # ax[0].set_title("Object count")
+    ax[0].set_xlabel('Ground-truth count')
+    ax[0].set_ylabel('Predicted count')
     ax[0].plot(*true_line, 'r-')
     ax[0].scatter(looper.best_true_values, looper.best_predicted_values)
 
     # loss
     epochs = np.arange(1, len(looper.running_loss) + 1)
-    ax[1].cla()
-    ax[1].set_title('Train' if not looper.validation else 'Valid')
+    # ax[1].cla()
+    # ax[1].set_title('Training' if not looper.validation else 'Validation')
     ax[1].set_xlabel('Epoch')
     ax[1].set_ylabel('Loss')
     ax[1].plot(epochs, looper.running_loss, "r", label="Loss")
 
     #precision and recall
+    # ax[2].set_title('')
     ax[2].set_ylabel("Evaluation (%)")
     ax[2].plot(epochs, looper.mean_precisions, "b", label="Precision")
     ax[2].plot(epochs, looper.mean_recalls, "g", label="Recall")
