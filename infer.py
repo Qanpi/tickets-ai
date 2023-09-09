@@ -155,7 +155,7 @@ def _visualize(img, dmap, n_objects, keypoints=None, save=None):
         axes[1].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors=edgeColor)
 
     # find n_objects peaks 
-    kernel = np.full((4, 4), 1)
+    kernel = np.full((9, 9), 1)
     peaks = peak_local_max(
         dmap, footprint=kernel, min_distance=2, num_peaks=n_objects, exclude_border=False
     )
