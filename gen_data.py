@@ -376,8 +376,8 @@ def generate_cell_data(path, train_percent):
 
         return {
           "size": data.size,
-          "mean": np.mean(data),
-          "std": np.std(data)
+          "mean": np.mean(data) if data.size != 0 else 0,
+          "std": np.std(data) if data.size != 0 else 0
         }
 
 
