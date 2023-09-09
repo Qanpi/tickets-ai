@@ -27,7 +27,7 @@ from scipy.io import loadmat
 @click.option('-p', "--path", type=click.Path(exists=False), required=True, help="Path to a directory called 'data' which will contain the image files.")
 @click.option("-tp", "--train_percent", default=0.8, help="The percentage of data to use for training (the rest is used for validation).")
 
-def get_data(dataset: str, path: str, train_percent: float):
+def gen_data(dataset: str, path: str, train_percent: float):
     """
     Get chosen dataset and generate HDF5 files with training
     and validation samples.
@@ -35,7 +35,7 @@ def get_data(dataset: str, path: str, train_percent: float):
     path = path or dataset 
 
     # dictionary-based switch statement
-    data = {
+    train, valid = {
         'cell': generate_cell_data,
         'mall': generate_mall_data,
         'ucsd': generate_ucsd_data,
@@ -43,9 +43,19 @@ def get_data(dataset: str, path: str, train_percent: float):
         "blueberry": generate_blueberry_data
     }[dataset](path, train_percent)
 
-    print(f"Successfully loaded dataset {dataset} to {path}.")
-    print(f"Mean: {np.mean(data)}")
-    print(f"Standard deviation: {np.std(data)}")
+    with open(os.path.join(path, "dataset.txt"), "w") as log:
+      print(f"""Training data:
+      Size: {train.get("size")}
+      Mean: {train.get("mean")} 
+      St. dev.: {train.get("std")}
+      """, file=log)
+
+      print(f"""Validation data:
+      Size: {valid.get('size')}
+      Mean: {valid.get('mean')} 
+      St. dev.: {valid.get('std')}
+      """, file=log)
+
 
 
 def create_hdf5(dataset_name: str,
@@ -244,7 +254,7 @@ def generate_mall_data():
     # cleanup
     shutil.rmtree('mall_dataset')
 
-def generate_blueberry_data(path): 
+def generate_blueberry_data(path, train_percent): 
     image_path = os.path.join(path, "img")
     image_list = glob(os.path.join(image_path, '*blueberry.png'))
 
@@ -252,10 +262,7 @@ def generate_blueberry_data(path):
         raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
     
     dataset_size = len(image_list)
-    train_percent = 0.8
     split = int(train_percent * dataset_size)
-
-    data = []
 
     # create training and validation HDF5 files
     train_h5, valid_h5 = create_hdf5(path,
@@ -288,23 +295,27 @@ def generate_blueberry_data(path):
             # make a one-channel label array with 100 in dots positions
             label = 100.0 * label
 
-            #append the count 
-            data.append(np.count_nonzero(label))
-
             # save data to HDF5 file
             h5['images'][i] = image
             h5['labels'][i, 0] = label
+        
+        data = np.sum(h5["labels"], axis=(1, 2, 3)) / 100.0
+
+        return {
+          "size": data.size,
+          "mean": np.mean(data),
+          "std": np.std(data)
+        }
 
     # use first 150 samples for training and the last 50 for validation
-    fill_h5(train_h5, image_list[:split])
-    fill_h5(valid_h5, image_list[split:])
+    train_params = fill_h5(train_h5, image_list[:split])
+    valid_params = fill_h5(valid_h5, image_list[split:])
 
     # close HDF5 files
     train_h5.close()
     valid_h5.close()
 
-    return np.array(data)
-
+    return train_params, valid_params
 
 def generate_cell_data(path, train_percent):
     """Generate HDF5 files for fluorescent cell dataset."""
@@ -324,8 +335,6 @@ def generate_cell_data(path, train_percent):
 
     dataset_size = len(image_list)
     split = int(train_percent * dataset_size)
-
-    data = []
 
     # create training and validation HDF5 files
     train_h5, valid_h5 = create_hdf5(path,
@@ -359,22 +368,28 @@ def generate_cell_data(path, train_percent):
             label = (label[:, :, 0] > 0) if label.ndim == 3 else label
             label = 100.0 * label
 
-            #append the count 
-            data.append(np.count_nonzero(label))
-
             # save data to HDF5 file
             h5['images'][i] = image
             h5['labels'][i, 0] = label
 
+        data = np.sum(h5["labels"], axis=(1, 2, 3)) / 100.0
+
+        return {
+          "size": data.size,
+          "mean": np.mean(data),
+          "std": np.std(data)
+        }
+
+
     # use first 150 samples for training and the last 50 for validation
-    fill_h5(train_h5, image_list[:split])
-    fill_h5(valid_h5, image_list[split:])
+    train_params = fill_h5(train_h5, image_list[:split])
+    valid_params = fill_h5(valid_h5, image_list[split:])
 
     # close HDF5 files
     train_h5.close()
     valid_h5.close()
 
-    return np.array(data)
+    return train_params, valid_params
     # cleanup
     # shutil.rmtree('cell')
 
@@ -421,4 +436,4 @@ def generate_ticket_data(path):
         # shutil.rmtree("ticket")
 
 if __name__ == '__main__':
-    get_data()
+    gen_data()
