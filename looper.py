@@ -161,6 +161,17 @@ class Looper:
             f"\tMean recall: {self.mean_recalls[-1]:3.3f}\n"
         )
 
+def calculate_classifications(true, dmap, exp=9): #exp is the same as what was used for gauss kernel to generating true dmaps for training
+    true_exp = maximum_filter(true, size=(exp,)*2)
+    dmap_exp = maximum_filter(dmap, size=(exp,)*2)
+
+    #find true positives, false positives and false negatives
+    TP = np.logical_and(true, dmap_exp)
+    FP = np.logical_and(true_exp == 0, dmap)
+    FN = np.logical_and(true, dmap_exp == 0) 
+
+    return TP, FP, FN
+
 def find_precision_recall(true, predicted):
     n = int(np.sum(predicted) / 100)
 
@@ -171,14 +182,11 @@ def find_precision_recall(true, predicted):
     dmap = np.full(predicted.shape, 0)
     dmap[x, y] = 1
 
-    EXPANSION = 9
-    true_exp = maximum_filter(true, size=(EXPANSION,)*2)
-    dmap_exp = maximum_filter(dmap, size=(EXPANSION,)*2)
+    TP, FP, FN = calculate_classifications(true, dmap)
 
-    #find true positives, false positives and false negatives
-    TP = np.count_nonzero(np.logical_and(true, dmap_exp)) 
-    FP = np.count_nonzero(np.logical_and(true_exp == 0, dmap)) 
-    FN = np.count_nonzero(np.logical_and(true, dmap_exp == 0)) 
+    TP = np.count_nonzero(TP)
+    FP = np.count_nonzero(FP)
+    FN = np.count_nonzero(FN)
 
     try:
       precision = TP / (TP + FP)
@@ -190,15 +198,17 @@ def find_precision_recall(true, predicted):
     return precision, recall 
 
 
-def test_precision_recall():
+def test_classifications():
     TP = FP = FN = 2
     true = np.array([[0, 1, 0], [1, 1, 0], [1, 0, 0]])
     predicted = np.array([[1, 0, 0], [0, 1, 0], [1, 1, 0]])
 
-    precision, recall = find_precision_recall(true, predicted)
+    tp, fp, fn = calculate_classifications(true, predicted, exp=0)
 
-    assert precision == TP / (TP + FP)
-    assert recall == TP / (TP + FN)
+    assert TP == np.count_nonzero(tp)
+    assert FP == np.count_nonzero(fp)
+    assert FN == np.count_nonzero(fn)
+
 
 #1st, 11th, 18th
 #find time to present article yourself
