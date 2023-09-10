@@ -27,6 +27,7 @@ from PIL import Image
 from skimage.feature import peak_local_max
 
 from models import UNet, FCRN_A
+from looper import calculate_classifications, find_predicted_dots
 
 
 @click.command()
@@ -120,18 +121,17 @@ def infer(
 
     print(f"The number of objects found: {n_objects}")
 
-    keypoints = None
 
+    answer_key = None
     if valid_path is not None:
         answer_key = np.array(Image.open(valid_path.name))
-        keypoints = np.argwhere(answer_key)
 
-        print(f"The true number of objects: {keypoints.shape[0]}")
+        print(f"The true number of objects: {np.sum(answer_key)}")
 
     if visualize:
-        _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, keypoints, save)
+        _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, answer_key, save)
 
-def _visualize(img, dmap, n_objects, keypoints=None, save=None):
+def _visualize(img, dmap, n_objects, key, save=None):
     """Draw a density map onto the image."""
     # keep the same aspect ratio as an input image
     fig, axes = plt.subplots(1, 2)
@@ -139,33 +139,34 @@ def _visualize(img, dmap, n_objects, keypoints=None, save=None):
     # turn off axis ticks
     [ax.axis("off") for ax in axes]
 
-    print(np.mean(dmap))
-    np.save("dmap.npy", dmap)
-
     # display raw density map
     axes[0].imshow(dmap, cmap="hot")
+    # display og image 
+    axes[1].imshow(img)
+
+    dots = find_predicted_dots(dmap)
 
     # overlay true keypoints
-    if keypoints is not None:
-        true_x = [xy[1] for xy in keypoints]
-        true_y = [xy[0] for xy in keypoints]
+    if key is not None:
+        true = np.nonzero(key)
 
         edgeColor = "#00ff00"
-        axes[0].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors=edgeColor)
-        axes[1].scatter(x=true_x, y=true_y, c="none", s=50, marker="s", edgecolors=edgeColor)
+        axes[0].scatter(x=true[1], y=true[0], c="none", s=50, marker="s", edgecolors=edgeColor)
 
-    # find n_objects peaks 
-    kernel = np.full((9, 9), 1)
-    peaks = peak_local_max(
-        dmap, footprint=kernel, min_distance=2, num_peaks=n_objects, exclude_border=False
-    )
+        TP, FP, FN = calculate_classifications(key, dots)
 
-    pred_x = [xy[1] for xy in peaks]
-    pred_y = [xy[0] for xy in peaks]
+        tps = np.nonzero(TP)
+        fps = np.nonzero(FP)
+        fns = np.nonzero(FN)
 
-    # plot density map over og image
-    axes[1].imshow(img)
-    axes[1].scatter(x=pred_x, y=pred_y, c="#ff0000", s=20, marker="x") 
+        axes[1].scatter(x=tps[1], y=tps[0], c="#00ff00", s=20, marker="x")
+        axes[1].scatter(x=fps[1], y=fps[0], c="#ff0000", s=20, marker="x")
+        axes[1].scatter(x=fns[1], y=fns[0], c="#ff00ff", s=20, marker="x")
+
+    else:
+        pred = np.nonzero(dots)
+        axes[1].scatter(x=pred[1], y=pred[0], c="#ff0000", s=20, marker="x") 
+
 
     if save is not None:
         fig.savefig(save, bbox_inches="tight")

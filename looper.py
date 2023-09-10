@@ -172,7 +172,7 @@ def calculate_classifications(true, dmap, exp=9): #exp is the same as what was u
 
     return TP, FP, FN
 
-def find_precision_recall(true, predicted):
+def find_predicted_dots(predicted):
     n = int(np.sum(predicted) / 100)
 
     peaks = peak_local_max(predicted, exclude_border=False, num_peaks=n)
@@ -181,6 +181,11 @@ def find_precision_recall(true, predicted):
 
     dmap = np.full(predicted.shape, 0)
     dmap[x, y] = 1
+
+    return dmap
+
+def find_precision_recall(true, predicted):
+    dmap = find_predicted_dots(predicted)
 
     TP, FP, FN = calculate_classifications(true, dmap)
 
