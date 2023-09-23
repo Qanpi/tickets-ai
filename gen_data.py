@@ -393,25 +393,24 @@ def generate_cell_data(path, train_percent):
     # cleanup
     # shutil.rmtree('cell')
 
-def generate_ticket_data(path):
+def generate_ticket_data(path, train_percent):
     image_path = os.path.join(path, "img")
     image_list = glob(os.path.join(image_path, "*ticket*.*"))
 
     # download and extract dataset
     if len(image_list) == 0:
-        raise ValueError(f"Images for dataset 'blueberry' not found at path {image_path}.")
+        raise ValueError(f"Images for dataset 'ticket' not found at path {image_path}.")
     
     image_list.sort()
 
     dataset_size = len(image_list)
-    train_percent = 0.8
     split = int(train_percent * dataset_size)
 
     try:
         train_h5, valid_h5 = create_hdf5(path,
                                         train_size=split,
                                         valid_size=dataset_size - split,
-                                        img_size=(256, 256),
+                                        img_size=(512, 512),
                                         in_channels=3)
 
         def fill_h5(h5, images):
@@ -422,14 +421,24 @@ def generate_ticket_data(path):
                 image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
 
                 key = np.array(Image.open(key_path))
+                key = key[:, :, 0] > 0
                 key = 100.0 * key
 
                 h5['images'][i] = image
                 h5['labels'][i, 0] = key
+            
+            data = np.sum(h5["labels"], axis=(1, 2, 3)) / 100.0
 
-        fill_h5(train_h5, image_list[:split])
-        fill_h5(valid_h5, image_list[split:])
+            return {
+              "size": data.size,
+              "mean": np.mean(data) if data.size != 0 else 0,
+              "std": np.std(data) if data.size != 0 else 0
+            }
 
+        train_params = fill_h5(train_h5, image_list[:split])
+        valid_params = fill_h5(valid_h5, image_list[split:])
+
+        return train_params, valid_params
     finally: #cleanup
         train_h5.close()
         valid_h5.close()
