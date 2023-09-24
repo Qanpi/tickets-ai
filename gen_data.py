@@ -420,8 +420,8 @@ def generate_ticket_data(path, train_percent):
                 image = np.array(Image.open(img_path).convert("RGB"), dtype=np.float32) / 255
                 image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
 
-                key = np.array(Image.open(key_path))
-                key = key[:, :, 0] > 0
+                label = np.array(Image.open(key_path))
+                key = (label[:, :, 0] > 0) if label.ndim == 3 else label
                 key = 100.0 * key
 
                 h5['images'][i] = image

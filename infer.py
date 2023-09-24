@@ -124,9 +124,9 @@ def infer(
 
     answer_key = None
     if valid_path is not None:
-        answer_key = np.array(Image.open(valid_path.name))
+        answer_key = np.array(Image.open(valid_path.name))[:,:,0]
 
-        print(f"The true number of objects: {np.sum(answer_key)}")
+        print(f"The true number of objects: {np.count_nonzero(answer_key)}")
 
     if visualize:
         _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, answer_key, save)
