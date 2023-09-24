@@ -290,7 +290,7 @@ def generate_blueberry_data(path, train_percent):
             # in the form on an image with red dots placed in objects position
 
             # load an RGB image
-            label = np.array(Image.open(label_path))
+            label = np.array(Image.open(label_path)) > 0
 
             # make a one-channel label array with 100 in dots positions
             label = 100.0 * label
@@ -365,7 +365,7 @@ def generate_cell_data(path, train_percent):
             label = np.array(Image.open(label_path))
 
             # make a one-channel label array with 100 in red dots positions
-            label = (label[:, :, 0] > 0) if label.ndim == 3 else label
+            label = (label[:, :, 0] > 0) if label.ndim == 3 else label > 0
             label = 100.0 * label
 
             # save data to HDF5 file
@@ -421,7 +421,7 @@ def generate_ticket_data(path, train_percent):
                 image = np.transpose(image, (2, 0, 1)) #puts the channels in first dim
 
                 label = np.array(Image.open(key_path))
-                key = (label[:, :, 0] > 0) if label.ndim == 3 else label
+                key = (label[:, :, 0] > 0) if label.ndim == 3 else label > 0 
                 key = 100.0 * key
 
                 h5['images'][i] = image
