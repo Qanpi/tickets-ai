@@ -34,7 +34,7 @@ from looper import calculate_classifications, find_predicted_dots
 @click.option(
     "-i",
     "--infer_path",
-    type=click.File("r"),
+    type=click.Path(),
     required=True,
     help="A path to an input image to infer.",
 )
@@ -89,120 +89,40 @@ def infer(
     visualize: bool,
     save: str,
 ):
-    """Run inference for a single image."""
-    # use GPU if available
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+  if (os.path.isdir(infer_path)):
+    files = os.listdir(infer_path)
+    os.makedirs(save)
+    sum_ = 0
 
-    # only UCSD dataset provides greyscale images instead of RGB
-    input_channels = 1 if one_channel else 3
+    for f in files:
+      n = _infer(os.path.join(infer_path, f), 
+      valid_path,
+      network_architecture,
+      checkpoint,
+      unet_filters,
+      convolutions,
+      one_channel,
+      pad,
+      visualize,
+      os.path.join(save, f))
+      
+      sum_ += n
 
-    # initialize a model based on chosen network_architecture
-    network = {"UNet": UNet, "FCRN_A": FCRN_A}[network_architecture](
-        input_filters=input_channels, filters=unet_filters, N=convolutions
-    ).to(device)
-
-    # load provided state dictionary
-    # note: by default train.py saves the model in data parallel mode
-    network = torch.nn.DataParallel(network)
-    network.load_state_dict(torch.load(checkpoint.name, map_location=device))
-    network.eval()
-
-    img = Image.open(infer_path.name)
-
-    # padding was applied for ucsd images to allow down and upsampling
-    if pad:
-        img = Image.fromarray(np.pad(img, 1, "constant", constant_values=0))
-
-    # network's output represents a density map
-    density_map = network(TF.to_tensor(img).unsqueeze_(0))
-
-    # note: density maps were normalized to 100 * no. of objects
-    n_objects = torch.sum(density_map).item() / 100
-
-    print(f"The number of objects found: {n_objects}")
-
-
-    answer_key = None
-    if valid_path is not None:"""This script apply a chosen model on a given image.
-
-One needs to choose a network architecture and provide the corresponding
-state dictionary.
-
-Example:
-
-    $ python infer.py -n UNet -c mall_UNet.pth -i seq_000001.jpg
-
-The script also allows to visualize the results by drawing a resulting
-density map on the input image.
-
-Example:
-
-    $ $ python infer.py -n UNet -c mall_UNet.pth -i seq_000001.jpg --visualize
-
-"""
-import os
-
-import click
-import torch
-import numpy as np
-import torchvision.transforms.functional as TF
-import matplotlib.pyplot as plt
-from matplotlib.figure import figaspect
-from PIL import Image
-from skimage.feature import peak_local_max
-
-from models import UNet, FCRN_A
-from looper import calculate_classifications, find_predicted_dots
+    print(f"Total objects found in {len(files)} images: {sum_}")
+  else:
+    _infer(infer_path, 
+      valid_path,
+      network_architecture,
+      checkpoint,
+      unet_filters,
+      convolutions,
+      one_channel,
+      pad,
+      visualize,
+      save)
 
 
-@click.command()
-@click.option(
-    "-i",
-    "--infer_path",
-    type=click.File("r"),
-    required=True,
-    help="A path to an input image to infer.",
-)
-@click.option(
-    "-n",
-    "--network_architecture",
-    type=click.Choice(["UNet", "FCRN_A"]),
-    required=True,
-    help="Model architecture.",
-)
-@click.option(
-    "-c",
-    "--checkpoint",
-    type=click.File("r"),
-    required=True,
-    help="A path to a checkpoint with weights.",
-)
-@click.option(
-    "--unet_filters",
-    default=64,
-    help="Number of filters for U-Net convolutional layers.",
-)
-@click.option(
-    "--convolutions", default=2, help="Number of layers in a convolutional block."
-)
-@click.option(
-    "--one_channel",
-    is_flag=True,
-    help="Turn this on for one channel images (required for ucsd).",
-)
-@click.option(
-    "--pad", is_flag=True, help="Turn on padding for input image (required for ucsd)."
-)
-@click.option(
-    "-v",
-    "--valid_path",
-    type=click.File("r"),
-    help="A path to an answer image containing true keypoints.",
-)
-@click.option("--visualize", is_flag=True, help="Visualize predicted density map.")
-@click.option("--save", type=click.Path(exists=False), help="Save visualized plots to path.")
-
-def infer(
+def _infer(
     infer_path: str,
     valid_path: str,
     network_architecture: str,
@@ -232,7 +152,7 @@ def infer(
     network.load_state_dict(torch.load(checkpoint.name, map_location=device))
     network.eval()
 
-    img = Image.open(infer_path.name)
+    img = Image.open(infer_path)
 
     # padding was applied for ucsd images to allow down and upsampling
     if pad:
@@ -246,15 +166,17 @@ def infer(
 
     print(f"The number of objects found: {n_objects}")
 
-
     answer_key = None
-    if valid_path is not None:
+
+    if valid_path is not None and os.path.isfile(valid_path): 
         answer_key = np.array(Image.open(valid_path.name))
 
         print(f"The true number of objects: {np.count_nonzero(answer_key)}")
 
     if visualize:
         _visualize(img, density_map.squeeze().cpu().detach().numpy(), n_objects, answer_key, save)
+    
+    return n_objects
 
 def _visualize(img, dmap, n_objects, key, save=None):
     """Draw a density map onto the image."""
