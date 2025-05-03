@@ -2,6 +2,9 @@
 
 The implementation of this fork for a custom dataset can be found in [this Google Colab notebook](https://colab.research.google.com/drive/1pEv-rEBk4LcGEiz9jEAzYiAnUtqBJU_U?usp=sharing).
 
+![image](https://github.com/user-attachments/assets/32758e20-b12c-4225-9732-52d921c48679)
+[Find a video for a snappy yet comprehensive overview of the research paper here.](https://www.youtube.com/watch?v=ZUCz8p8QZOs)
+
 # Objects counting by estimating a density map with convolutional neural networks
 
 The PyTorch implementation of https://github.com/WeidiXie/cell_counting_v2.
